@@ -1,17 +1,35 @@
-# React + Vite
+# lp-forge
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Visual landing page builder and static site engine designed for rapid, zero-config edge deployments. 
 
-Currently, two official plugins are available:
+Built originally as internal tooling to bridge the gap between design and production—allowing non-technical designers to assemble, customize, and ship high-conversion landing pages to Vercel/Cloudflare without writing code or relying on bloated CMS platforms.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+> **Status (`v0` Prototype):** This repository contains the initial proof-of-concept engine used to validate custom state-to-DOM rendering and live block composition. A `v1` architectural rewrite focusing on strict TypeScript AST/JSON schemas, decoupled state management, and serialized static export is planned.
 
-## React Compiler
+## Architecture & Engineering Choices
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Instead of wrapping heavy third-party page builder frameworks (like GrapesJS or Craft.js), **lp-forge** implements a custom, lightweight composition layer from scratch:
 
-## Expanding the ESLint configuration
+- **Zero Builder Dependencies:** Block orchestration, live property mutation, and layout composition are handled directly through React 19 state primitives.
+- **Dynamic Styling Pipeline:** Uses `tailwind-merge` and `clsx` at runtime to resolve style overrides and variant collisions cleanly as designers tweak components visually.
+- **Declarative Motion:** Integrates `framer-motion` directly into block schemas, enabling complex scroll and entry animations without manual keyframe coding.
+- **Rust-backed Bundling (`rolldown-vite`):** Powered by `rolldown-vite` instead of standard Rollup, ensuring near-instant HMR during visual editing and fast production builds.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# nivix-flexpage
+## Tech Stack
+
+- **Core:** React 19, React Router v7
+- **Bundler:** Vite (`rolldown-vite` Rust engine)
+- **Styling & UI:** Tailwind CSS, `tailwind-merge`, `clsx`, Lucide Icons
+- **Animation:** Framer Motion
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server (exposed on local network)
+npm run dev
+
+# Build static production bundle
+npm run build
