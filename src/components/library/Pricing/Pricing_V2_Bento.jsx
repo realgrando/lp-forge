@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Pricing/Pricing_V2_Bento.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

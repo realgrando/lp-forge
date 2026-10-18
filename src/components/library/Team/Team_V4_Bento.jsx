@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Team/Team_V4_Bento.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, Linkedin, Facebook, Twitter } from 'lucide-react';
+import { Instagram, Linkedin, Facebook, Twitter } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 const socialIcons = {

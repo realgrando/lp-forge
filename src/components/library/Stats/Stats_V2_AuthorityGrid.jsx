@@ -1,6 +1,7 @@
+"use client";
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, animate } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import * as LucideIcons from '@/lib/lucide-shim';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 

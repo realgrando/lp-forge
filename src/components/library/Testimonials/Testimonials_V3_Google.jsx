@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { Star, CheckCircle2, Search, ArrowUpRight } from 'lucide-react';
+import { Star, CheckCircle2, Search, ArrowUpRight } from '@/lib/lucide-shim';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { commonFineTuning } from '../Common/SchemaProps';

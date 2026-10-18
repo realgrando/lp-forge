@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/LeadGen/StepForm_V1.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Send, CheckCircle2 } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

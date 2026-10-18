@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/BeforeAfter/BeforeAfter_V2_Cards.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRightLeft } from 'lucide-react';
+import { ArrowRightLeft } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

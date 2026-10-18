@@ -1,6 +1,7 @@
+"use client";
 // src/components/sections/Location.jsx
 import { motion } from 'framer-motion';
-import { MapPin, Clock, ArrowUpRight, Utensils, ShoppingBag, Bike, PawPrint } from 'lucide-react';
+import { MapPin, Clock, ArrowUpRight, Utensils, ShoppingBag, Bike, PawPrint } from '@/lib/lucide-shim';
 import SocialLinks from '../Common/SocialLinks';
 
 const TAG_ICONS = {

@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { ShieldCheck, Lock, Award, CheckCircle } from 'lucide-react';
+import { ShieldCheck, Lock, Award, CheckCircle } from '@/lib/lucide-shim';
 
 import { commonFineTuning } from '../Common/SchemaProps';
 

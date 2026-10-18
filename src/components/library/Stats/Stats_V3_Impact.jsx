@@ -1,3 +1,4 @@
+"use client";
 // src/components/library/Stats/Stats_V3_Impact.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';

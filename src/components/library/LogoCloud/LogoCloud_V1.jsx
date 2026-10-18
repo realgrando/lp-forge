@@ -1,3 +1,4 @@
+"use client";
 // src/components/library/LogoCloud/LogoCloud_V1.jsx
 import React from 'react';
 import { motion } from 'framer-motion';

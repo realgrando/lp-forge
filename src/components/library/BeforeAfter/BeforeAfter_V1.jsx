@@ -1,6 +1,7 @@
+"use client";
 import { motion } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
-import { HardHat, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { HardHat, Sparkles, ChevronLeft, ChevronRight } from '@/lib/lucide-shim';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

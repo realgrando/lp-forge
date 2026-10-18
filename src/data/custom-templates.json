@@ -1,0 +1,222 @@
+{
+  "templates": [
+    {
+      "id": "tpl_ixkoq6cnnzj",
+      "name": "Nivix Clone",
+      "description": "Template LP com 2 seções.",
+      "category": "Construção & Serviços",
+      "mode": "LANDING_PAGE",
+      "createdAt": "2026-10-17T21:53:08.143Z",
+      "updatedAt": "2026-10-18T00:18:33.981Z",
+      "document": {
+        "version": "2.0",
+        "meta": {
+          "id": "site_1kc2t61juad",
+          "name": "Nivix Clone",
+          "mode": "LANDING_PAGE",
+          "slug": "novo-projeto",
+          "title": "Novo Projeto — Nivix",
+          "description": "Construído no motor LP-Forge v2."
+        },
+        "theme": {
+          "presetId": "nivix-gold",
+          "palette": {
+            "background": "#0D0D0D",
+            "foreground": "#FAFAFA",
+            "primary": "#F4B400",
+            "secondary": "#27272A",
+            "surface": "#18181B",
+            "accent": "#F4B400"
+          },
+          "typography": {
+            "headingFont": "'Space Grotesk', sans-serif",
+            "bodyFont": "'Inter', sans-serif"
+          },
+          "tokens": {
+            "borderRadius": "lg",
+            "surfaceStyle": "glass"
+          }
+        },
+        "sections": [
+          {
+            "id": "sec_xjr8yk4nb86",
+            "type": "header.classic",
+            "layout": {
+              "paddingY": "none",
+              "paddingInner": "normal",
+              "paddingX": "normal",
+              "containerWidth": "full",
+              "hidden": false,
+              "distribution": "around",
+              "gap": "normal",
+              "reverse": false,
+              "direction": "row",
+              "sticky": false
+            },
+            "styles": {
+              "surfaceVariant": "solid",
+              "borderRadius": "none",
+              "ambientGlow": false,
+              "hiddenElements": {
+                "brand": false,
+                "logoImageUrl": false,
+                "ctaButton": false,
+                "navLinks": false
+              },
+              "bgGradientEnabled": false
+            },
+            "content": {
+              "brandName": "NIVIX",
+              "logoImageUrl": "",
+              "brandIcon": "Sparkles",
+              "justify": "between",
+              "navLinks": [
+                {
+                  "label": "Resultados",
+                  "url": "#about"
+                },
+                {
+                  "label": "Ecossistema",
+                  "url": "#ecossistema"
+                },
+                {
+                  "label": "Planos",
+                  "url": "#planos"
+                },
+                {
+                  "label": "Sobre nós",
+                  "url": "#time"
+                },
+                {
+                  "label": "Dúvidas",
+                  "url": "#faq"
+                }
+              ],
+              "ctaButton": {
+                "enabled": true,
+                "text": "Contrate",
+                "url": "#contato",
+                "variant": "solid",
+                "size": "sm",
+                "radius": "sm",
+                "iconName": "Calendar",
+                "iconPosition": "right",
+                "fullWidth": false
+              }
+            }
+          },
+          {
+            "id": "sec_701tzkvncu2",
+            "type": "hero.impact_center",
+            "layout": {
+              "paddingY": "normal",
+              "paddingInner": "none",
+              "paddingX": "normal",
+              "containerWidth": "boxed",
+              "minHeight": "auto",
+              "contentMaxWidth": "full",
+              "distribution": "center",
+              "alignItems": "center",
+              "gap": "normal",
+              "reverse": false,
+              "hidden": false,
+              "direction": "col"
+            },
+            "styles": {
+              "ambientGlow": false,
+              "surfaceVariant": "solid",
+              "borderRadius": "none",
+              "hiddenElements": {
+                "subtitle": true,
+                "stats": true
+              },
+              "typographyOverrides": {
+                "badge": {
+                  "fontFamily": "'Poppins', sans-serif",
+                  "fontWeight": "font-semibold",
+                  "iconName": "Lock",
+                  "highlightStyle": "accent",
+                  "highlightColor": "#F4B400",
+                  "textTransform": "capitalize",
+                  "fontSize": "text-xs"
+                },
+                "headline": {
+                  "fontFamily": "'Inter', sans-serif",
+                  "color": "#FFFFFF",
+                  "fontWeight": "font-semibold",
+                  "fontSize": "text-4xl md:text-6xl lg:text-6xl",
+                  "textTransform": "normal-case",
+                  "highlightStyle": "gradient",
+                  "highlightColor": "#F4B400"
+                },
+                "description": {
+                  "color": "#D6D6D6",
+                  "fontSize": "text-lg md:text-xl lg:text-xl",
+                  "fontWeight": "font-medium",
+                  "maxWidth": "medium"
+                }
+              },
+              "borderWidth": "0",
+              "borderColor": "#878787D4",
+              "glowColor": "#F4B4000D",
+              "borderBottom": false,
+              "borderGlow": false,
+              "borderTop": false,
+              "bgPattern": "grid",
+              "bgGradientEnabled": false,
+              "bgGradientDirection": "to-br",
+              "customText": "#FAFAFA"
+            },
+            "content": {
+              "align": "center",
+              "bgImage": "",
+              "badge": "CONTRATO LIVRE DE AMARRAS",
+              "headline": "A melhor equipe de **Marketing para Construtores** nos Estados Unidos\n",
+              "subtitle": "Escalamos sua operação com precisão cirúrgica e layouts de alto impacto que convertem em escala.",
+              "description": "Validamos o método americano que coloca homeowners qualificados e contratos de alto ticket na sua agenda todas as semanas, sem depender de indicação ou plataformas caras de leads compartilhados.\n\n",
+              "primaryCta": {
+                "enabled": true,
+                "text": "Entrar em Contato",
+                "url": "#contato",
+                "variant": "solid",
+                "size": "xl",
+                "radius": "md",
+                "iconName": "MessageCircle",
+                "iconPosition": "right",
+                "customBg": "#49e534",
+                "customText": "#ffffff",
+                "fullWidth": false
+              },
+              "secondaryCta": {
+                "enabled": false,
+                "text": "Ver Resultados",
+                "url": "#portfolio",
+                "variant": "outline",
+                "size": "lg",
+                "radius": "lg",
+                "iconName": "Play",
+                "iconPosition": "left"
+              },
+              "stats": [
+                {
+                  "value": "+340%",
+                  "label": "Média de Conversão"
+                },
+                {
+                  "value": "0ms",
+                  "label": "Latência de Servidor"
+                },
+                {
+                  "value": "100%",
+                  "label": "Garantia em Contrato"
+                }
+              ],
+              "scrollLabel": "Rolar para Conhecer"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "sectionPacks": []
+}

@@ -1,3 +1,4 @@
+"use client";
 // src/components/library/LogoCloud/LogoCloud_V2.jsx
 import { motion } from 'framer-motion';
 import { commonFineTuning } from '../Common/SchemaProps';

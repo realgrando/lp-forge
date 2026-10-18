@@ -1,3 +1,4 @@
+"use client";
 // src/components/library/Dividers/SectionDivider_V1.jsx
 import React from 'react';
 import { commonFineTuning } from '../Common/SchemaProps';

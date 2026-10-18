@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Pricing/Pricing_V1.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

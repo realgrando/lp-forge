@@ -1,35 +1,60 @@
-# lp-forge
+# LP-Forge v2
 
-Visual landing page builder and static site engine designed for rapid, zero-config edge deployments. 
+Motor moderno, desacoplado e de alta performance para criação e customização de Landing Pages profissionais.
 
-Built originally as internal tooling to bridge the gap between design and production—allowing non-technical designers to assemble, customize, and ship high-conversion landing pages to Vercel/Cloudflare without writing code or relying on bloated CMS platforms.
+## 🚀 Arquitetura v2
 
-> **Status (`v0` Prototype):** This repository contains the initial proof-of-concept engine used to validate custom state-to-DOM rendering and live block composition. A `v1` architectural rewrite focusing on strict TypeScript AST/JSON schemas, decoupled state management, and serialized static export is planned.
+O LP-Forge v2 foi completamente reconstruído sobre **Next.js 16 (App Router)**, **React 19**, **TypeScript** e **Tailwind CSS**, operando com um sistema desacoplado de renderização dinâmica em **4 camadas**:
 
-## Architecture & Engineering Choices
+1. **Camada 1 — Container da Seção (Pai):**
+   - Controle de largura máxima (`full`, `boxed`, `narrow`, `mobile`).
+   - Altura de escala vertical (`auto`, `100vh`, `75%`, `50%`).
+   - Posicionamento Horizontal X do componente no pai (`start` / esquerda, `center` / centro, `end` / direita).
+   - Posicionamento Vertical Y no pai (`start`, `center`, `end`, `stretch`).
+   - Respiros externos verticais (`paddingY`) e margens laterais (`paddingX`).
+   - Fixação no topo (`sticky header`).
 
-Instead of wrapping heavy third-party page builder frameworks (like GrapesJS or Craft.js), **lp-forge** implements a custom, lightweight composition layer from scratch:
+2. **Camada 2 — Container do Componente (Filho):**
+   - Largura do componente (`full` 100%, `auto` / cápsula que abraça o conteúdo, `boxed`, `narrow`).
+   - Espessura interna vertical (`paddingInner`).
+   - Acabamentos de superfície (`glass`, `solid`, `bordered`, `3d_floating`, `neon`).
+   - Borda (`borderRadius`, `borderWidth`, `borderColor`).
+   - Superfície customizada (`customSurface`) e Luz Ambiente (`ambientGlow`).
 
-- **Zero Builder Dependencies:** Block orchestration, live property mutation, and layout composition are handled directly through React 19 state primitives.
-- **Dynamic Styling Pipeline:** Uses `tailwind-merge` and `clsx` at runtime to resolve style overrides and variant collisions cleanly as designers tweak components visually.
-- **Declarative Motion:** Integrates `framer-motion` directly into block schemas, enabling complex scroll and entry animations without manual keyframe coding.
-- **Rust-backed Bundling (`rolldown-vite`):** Powered by `rolldown-vite` instead of standard Rollup, ensuring near-instant HMR during visual editing and fast production builds.
+3. **Camada 3 — Elementos Internos (Flex & Fluxo):**
+   - Direção (`col`, `row`, `responsive` — vertical no mobile e horizontal no desktop).
+   - Inversão de ordem (`reverse`).
+   - Distribuição principal (`start`, `center`, `end`, `between`, `around`).
+   - Alinhamento transversal (`start`, `center`, `end`, `stretch`).
+   - Espaçamento (`gap`: `none`, `compact`, `normal`, `spacious`, `monumental`).
 
-## Tech Stack
+4. **Camada 4 — Tipografia Cirúrgica & Ações Inteligentes:**
+   - `<EditableText />`: controle individual por elemento textual com escala de tamanhos, todos os pesos (`font-light` a `font-black`), transformação de caixa (`camelCase`, `UPPERCASE`, `lowercase`, `custom`), limites de largura (`prose`) e destaques (`highlights`).
+   - `<SmartButton />`: botões de alta conversão com tamanhos, variantes visuais, ícones dinâmicos (`Lucide`) e âncoras navegáveis suaves.
+   - Opcionalidade de 100% dos sub-elementos (`optionalKey` e `hiddenElements`).
 
-- **Core:** React 19, React Router v7
-- **Bundler:** Vite (`rolldown-vite` Rust engine)
-- **Styling & UI:** Tailwind CSS, `tailwind-merge`, `clsx`, Lucide Icons
-- **Animation:** Framer Motion
+---
 
-## Local Development
+## 🛠️ Tecnologias
+
+- **Framework:** Next.js 16 (App Router, Turbopack)
+- **UI:** React 19, Tailwind CSS, Lucide React
+- **Estado:** Zustand com histórico completo (Undo / Redo)
+- **Tipagem & Schemas:** TypeScript + Zod
+
+---
+
+## 📦 Como Rodar Localmente
 
 ```bash
-# Install dependencies
+# Instalar dependências
 npm install
 
-# Run development server (exposed on local network)
+# Iniciar servidor de desenvolvimento
 npm run dev
 
-# Build static production bundle
+# Gerar build de produção
 npm run build
+```
+
+Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.

@@ -1,8 +1,9 @@
+"use client";
 // src/components/library/About/About_V1.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, animate } from 'framer-motion';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { CheckCircle2, ArrowRight } from '@/lib/lucide-shim';
+import * as LucideIcons from '@/lib/lucide-shim';
 import { commonFineTuning, commonBadge, commonElement, commonButtonFields, commonTypographyFields } from '../Common/SchemaProps';
 
 const CountUp = ({ value, duration = 2 }) => {

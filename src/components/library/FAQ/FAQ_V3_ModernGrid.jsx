@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { HelpCircle, Plus, Minus, Sparkles } from 'lucide-react';
+import { HelpCircle, Plus, Minus, Sparkles } from '@/lib/lucide-shim';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';

@@ -1,6 +1,7 @@
+"use client";
 import { useState, useEffect } from 'react';
-import { Link } from 'react-scroll';
-import { Menu, X } from 'lucide-react';
+import { Link } from '@/lib/react-scroll-shim';
+import { Menu, X } from '@/lib/lucide-shim';
 import { motion, AnimatePresence } from 'framer-motion';
 import { commonFineTuning, commonButtonFields, commonTypographyFields, commonElement } from '../Common/SchemaProps';
 
@@ -178,7 +179,7 @@ export default function Header_V1({ data }) {
 
   return (
     <nav 
-      className={`fixed top-0 left-0 w-full z-[100] h-20 flex items-center transition-all duration-500 ${
+      className={`relative top-0 left-0 w-full z-40 h-20 flex items-center transition-all duration-500 ${
         scrolled || isOpen ? 'shadow-xl' : ''
       }`}
       style={{ 

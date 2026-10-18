@@ -1,10 +1,11 @@
+"use client";
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   CheckCircle2, Star, Shield, HardHat, 
   Truck, Clock, Hammer, Paintbrush, 
   Droplets, Zap, Ruler, Users, Sparkles, Target, Award
-} from 'lucide-react';
+} from '@/lib/lucide-shim';
 import { commonFineTuning, commonTypographyFields, commonElement, commonBadge, commonButtonFields } from '../Common/SchemaProps';
 
 const ICON_MAP = {

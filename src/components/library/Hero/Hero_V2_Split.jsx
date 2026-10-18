@@ -1,6 +1,7 @@
+"use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, ChevronDown } from '@/lib/lucide-shim';
 import { commonFineTuning, commonButtonFields, commonTypographyFields, commonElement, commonBadge } from '../Common/SchemaProps';
 
 const hexToRgba = (hex, alpha) => {

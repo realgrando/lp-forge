@@ -1,6 +1,7 @@
+"use client";
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles } from '@/lib/lucide-shim';
 
 import { commonFineTuning } from '../Common/SchemaProps';
 

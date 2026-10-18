@@ -1,6 +1,7 @@
+"use client";
 import { useState, useEffect } from 'react';
-import { Link } from 'react-scroll';
-import { Menu, X } from 'lucide-react';
+import { Link } from '@/lib/react-scroll-shim';
+import { Menu, X } from '@/lib/lucide-shim';
 import { motion, AnimatePresence } from 'framer-motion';
 import { commonFineTuning, commonButtonFields, commonTypographyFields, commonElement } from '../Common/SchemaProps';
 
@@ -173,7 +174,7 @@ export default function Header_V3_Artisan({ data }) {
   const mobileJustify = JUSTIFY_MAP_MOBILE[layout.justifyMobile] || 'items-start';
 
   return (
-    <header className="fixed top-0 left-0 w-full z-[100] transition-all duration-300">
+    <header className="relative top-0 left-0 w-full z-40 transition-all duration-300">
       <nav 
         className={`py-6 transition-all duration-500 ${scrolled || isOpen ? 'shadow-2xl py-4' : 'py-8'}`}
         style={{ 

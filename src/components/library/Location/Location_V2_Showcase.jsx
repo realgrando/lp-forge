@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { MapPin, Clock, ArrowUpRight, Utensils, ShoppingBag, Bike, PawPrint, Navigation, Globe } from 'lucide-react';
+import { MapPin, Clock, ArrowUpRight, Utensils, ShoppingBag, Bike, PawPrint, Navigation, Globe } from '@/lib/lucide-shim';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

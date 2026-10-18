@@ -1,10 +1,11 @@
+"use client";
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Send, CheckCircle2, User, MessageSquare, 
   Calculator, FileCheck, Phone, CheckCircle, 
   Zap, Shield, ArrowRight, ArrowDown, ChevronDown 
-} from 'lucide-react';
+} from '@/lib/lucide-shim';
 import { commonFineTuning, commonTypographyFields, commonElement, commonBadge, commonButtonFields } from '../Common/SchemaProps';
 
 const ICON_MAP = {

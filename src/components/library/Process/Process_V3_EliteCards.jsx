@@ -1,6 +1,7 @@
+"use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
+import * as LucideIcons from '@/lib/lucide-shim';
 import { 
   commonFineTuning, 
   commonTypographyFields, 

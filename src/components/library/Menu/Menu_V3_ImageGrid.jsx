@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Menu/Menu_V3_ImageGrid.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Utensils, Star } from 'lucide-react';
+import { Utensils, Star } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

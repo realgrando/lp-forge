@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { Send, Phone, Mail, MapPin, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Send, Phone, Mail, MapPin, Sparkles, CheckCircle2 } from '@/lib/lucide-shim';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';

@@ -1,3 +1,4 @@
+"use client";
 // src/components/library/Pricing/Pricing_V4_Minimalist.jsx
 import React from 'react';
 import { motion } from 'framer-motion';

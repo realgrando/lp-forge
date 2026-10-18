@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/LeadGen/LeadMagnet_V1.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, CheckCircle2, Send } from 'lucide-react';
+import { Download, CheckCircle2, Send } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

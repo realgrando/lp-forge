@@ -1,8 +1,9 @@
+"use client";
 // src/components/library/Footer/Footer_V3_Compact.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import * as LucideIcons from 'lucide-react';
-import { Instagram } from 'lucide-react';
+import * as LucideIcons from '@/lib/lucide-shim';
+import { Instagram } from '@/lib/lucide-shim';
 import { commonFineTuning, commonTypographyFields, commonElement } from '../Common/SchemaProps';
 
 export const metadata = {

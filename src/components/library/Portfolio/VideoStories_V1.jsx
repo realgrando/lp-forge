@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Portfolio/VideoStories_V1.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, X, Volume2, VolumeX } from 'lucide-react';
+import { Play, X, Volume2, VolumeX } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Narrative/Timeline_V1.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { History, Calendar, Star } from 'lucide-react';
+import { History, Calendar, Star } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

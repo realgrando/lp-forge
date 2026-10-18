@@ -1,6 +1,7 @@
+"use client";
 // src/components/sections/GridBlock.jsx
 import { motion } from 'framer-motion';
-import { ShoppingBag, ArrowRight, Star, ExternalLink } from 'lucide-react';
+import { ShoppingBag, ArrowRight, Star, ExternalLink } from '@/lib/lucide-shim';
 
 import { commonFineTuning } from '../Common/SchemaProps';
 

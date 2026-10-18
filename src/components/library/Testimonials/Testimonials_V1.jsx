@@ -1,6 +1,7 @@
+"use client";
 // src/components/library/Testimonials/Testimonials_V1.jsx
 import { motion } from 'framer-motion';
-import { Star, Quote, CheckCircle2 } from 'lucide-react';
+import { Star, Quote, CheckCircle2 } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

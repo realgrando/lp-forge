@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Pricing/Pricing_V3_Elite.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ArrowRight, Star } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Star } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

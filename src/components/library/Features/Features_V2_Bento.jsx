@@ -1,6 +1,7 @@
+"use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Target, Zap, Shield, Users, Award, CheckCircle2, ArrowUpRight } from 'lucide-react';
+import { Sparkles, Target, Zap, Shield, Users, Award, CheckCircle2, ArrowUpRight } from '@/lib/lucide-shim';
 import { commonFineTuning, commonTypographyFields, commonElement, commonBadge } from '../Common/SchemaProps';
 
 const ICON_MAP = {

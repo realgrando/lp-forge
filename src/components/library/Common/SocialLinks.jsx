@@ -1,6 +1,7 @@
+"use client";
 // src/components/ui/SocialLinks.jsx
 import { motion } from 'framer-motion';
-import { Instagram, Facebook, MessageCircle, Twitter, Linkedin, Youtube } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, Twitter, Linkedin, Youtube } from '@/lib/lucide-shim';
 
 const ICON_MAP = {
   instagram: Instagram,

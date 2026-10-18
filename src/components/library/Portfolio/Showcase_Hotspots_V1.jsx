@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Portfolio/Showcase_Hotspots_V1.jsx
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Info, Target, Sparkles } from 'lucide-react';
+import { Plus, X, Info, Target, Sparkles } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

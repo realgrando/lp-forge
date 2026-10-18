@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { Send, Phone, Mail, MapPin } from 'lucide-react';
+import { Send, Phone, Mail, MapPin } from '@/lib/lucide-shim';
 
 import { commonFineTuning } from '../Common/SchemaProps';
 

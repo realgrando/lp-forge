@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/About/About_V4_Impact.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, animate } from 'framer-motion';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldCheck } from '@/lib/lucide-shim';
 import { commonFineTuning, commonBadge, commonElement, commonButtonFields, commonTypographyFields } from '../Common/SchemaProps';
 
 const CountUp = ({ value, duration = 2 }) => {

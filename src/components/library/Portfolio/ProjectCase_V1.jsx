@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Portfolio/ProjectCase_V1.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, Lightbulb, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Target, Lightbulb, CheckCircle2, TrendingUp } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 export const metadata = {

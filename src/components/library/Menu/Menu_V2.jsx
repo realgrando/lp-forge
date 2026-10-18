@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { Utensils, ArrowUpRight } from 'lucide-react';
+import { Utensils, ArrowUpRight } from '@/lib/lucide-shim';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

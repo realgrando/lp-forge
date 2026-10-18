@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/Narrative/Awards_V1.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Award, Trophy, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Award, Trophy, ShieldCheck, CheckCircle } from '@/lib/lucide-shim';
 import { commonFineTuning } from '../Common/SchemaProps';
 
 const ICON_MAP = {

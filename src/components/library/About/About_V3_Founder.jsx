@@ -1,7 +1,8 @@
+"use client";
 // src/components/library/About/About_V3_Founder.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Quote } from 'lucide-react';
+import { ArrowRight, Quote } from '@/lib/lucide-shim';
 import { commonFineTuning, commonBadge, commonElement, commonButtonFields, commonTypographyFields } from '../Common/SchemaProps';
 
 export const metadata = {

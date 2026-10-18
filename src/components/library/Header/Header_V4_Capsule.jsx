@@ -1,6 +1,7 @@
+"use client";
 import { useState, useEffect } from 'react';
-import { Link } from 'react-scroll';
-import { Menu, X } from 'lucide-react';
+import { Link } from '@/lib/react-scroll-shim';
+import { Menu, X } from '@/lib/lucide-shim';
 import { motion, AnimatePresence } from 'framer-motion';
 import { commonFineTuning, commonButtonFields, commonTypographyFields, commonElement } from '../Common/SchemaProps';
 
@@ -176,7 +177,7 @@ export default function Header_V4_Capsule({ data }) {
   const mobileJustify = JUSTIFY_MAP_MOBILE[layout.justifyMobile] || 'justify-between';
 
   return (
-    <header className={`fixed left-0 w-full z-[100] transition-all duration-500 ${scrolled ? 'top-2' : 'top-6'} px-4 md:px-8`}>
+    <header className={`relative left-0 w-full z-40 transition-all duration-500 py-4 px-4 md:px-8`}>
       <nav 
         className={`mx-auto transition-all duration-500 rounded-full border border-white/10 shadow-2xl flex items-center h-16 md:h-20 ${
           layout.width === 'full' ? 'w-full px-6 md:px-12' : 'container mx-auto px-12 md:px-6'

@@ -1,8 +1,9 @@
+"use client";
 // src/components/library/Footer/Footer_V1.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, Linkedin, Facebook, Twitter, ArrowRight } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { Instagram, Linkedin, Facebook, Twitter, ArrowRight } from '@/lib/lucide-shim';
+import * as LucideIcons from '@/lib/lucide-shim';
 import { commonFineTuning, commonTypographyFields, commonElement } from '../Common/SchemaProps';
 
 const socialIcons = {

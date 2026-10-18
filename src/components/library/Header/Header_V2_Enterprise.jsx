@@ -1,6 +1,7 @@
+"use client";
 import { useState, useEffect } from 'react';
-import { Link } from 'react-scroll';
-import { Menu, X, Phone, Mail, Instagram, Linkedin, Facebook } from 'lucide-react';
+import { Link } from '@/lib/react-scroll-shim';
+import { Menu, X, Phone, Mail, Instagram, Linkedin, Facebook } from '@/lib/lucide-shim';
 import { motion, AnimatePresence } from 'framer-motion';
 import { commonFineTuning, commonButtonFields, commonTypographyFields, commonElement } from '../Common/SchemaProps';
 
@@ -195,7 +196,7 @@ export default function Header_V2_Enterprise({ data, globalSocials }) {
   const hasTopBar = data.topPhone || data.topEmail;
 
   return (
-    <header className="fixed top-0 left-0 w-full z-[100] transition-all duration-300">
+    <header className="relative top-0 left-0 w-full z-40 transition-all duration-300">
       {/* TOP BAR */}
       <AnimatePresence>
         {hasTopBar && !scrolled && !isOpen && (

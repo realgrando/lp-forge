@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ChevronDown, ArrowRight } from '@/lib/lucide-shim';
 import { commonFineTuning, commonButtonFields, commonTypographyFields, commonElement, commonBadge } from '../Common/SchemaProps';
 
 const heroSchema = [

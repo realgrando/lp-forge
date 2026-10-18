@@ -1,5 +1,6 @@
+"use client";
 import { motion } from 'framer-motion';
-import { UtensilsCrossed, Sparkles } from 'lucide-react';
+import { UtensilsCrossed, Sparkles } from '@/lib/lucide-shim';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
