@@ -81,6 +81,7 @@ import {
   Columns2,
   Box,
   Image as ImageIcon,
+  Info,
 } from "lucide-react";
 
 export default function StudioPage() {
@@ -94,6 +95,7 @@ export default function StudioPage() {
     templates,
     sectionPacks,
     selectSection,
+    setActiveInspectorLayer,
     setViewport,
     switchModeWithPreset,
     undo,
@@ -1250,12 +1252,16 @@ export default function StudioPage() {
                 {rightTab === "style" && (
                   <div className="space-y-4">
                     {/* CAMADA 1: CONTAINER DA SEÇÃO (PAI) */}
-                    <AccordionSection
-                      title="1. Container da Seção (Pai)"
-                      subtitle="Largura, altura e alinhamento do bloco na página"
-                      icon={Box}
-                      defaultOpen={true}
+                    <div
+                      onMouseEnter={() => setActiveInspectorLayer("parent")}
+                      onFocusCapture={() => setActiveInspectorLayer("parent")}
                     >
+                      <AccordionSection
+                        title="1. Container da Seção (Pai)"
+                        subtitle="Largura, altura e alinhamento do bloco na página"
+                        icon={Box}
+                        defaultOpen={true}
+                      >
                       <div className="space-y-5">
                         {/* Largura Máxima do Container Pai */}
                         <div className="space-y-1.5">
@@ -1335,62 +1341,186 @@ export default function StudioPage() {
                         </div>
 
                         {/* Posição Horizontal do Componente no Container Pai (Eixo X) */}
-                        <div className="space-y-1.5 pt-2 border-t border-white/5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Posição Horizontal no Pai (Eixo X)
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Alinhamento do bloco
-                            </span>
-                          </div>
-                          <SegmentedControl<ContainerAlignX>
-                            value={selectedSection.layout.containerAlignX || "center"}
-                            onChange={(ax) =>
-                              updateSectionLayout(selectedSection.id, {
-                                containerAlignX: ax,
-                              })
-                            }
-                            columns={3}
-                            size="sm"
-                            options={[
-                              { value: "start", label: "Esquerda", icon: <AlignLeft className="w-3 h-3" /> },
-                              { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
-                              { value: "end", label: "Direita", icon: <AlignRight className="w-3 h-3" /> },
-                            ]}
-                          />
-                          <span className="text-[10px] text-zinc-500 block">
-                            Define para onde o componente filho (card/cápsula) se desloca dentro do container da seção.
-                          </span>
-                        </div>
+                        {(() => {
+                          const isSectionFull =
+                            (selectedSection.layout.containerWidth ||
+                              (selectedSection.type.startsWith("header.") ? "full" : "boxed")) ===
+                            "full";
+                          const isComponentFull =
+                            (selectedSection.layout.componentWidth ||
+                              (selectedSection.type === "header.capsule" ? "auto" : "full")) ===
+                            "full";
+                          const hasNoHorizontalFreedom = isSectionFull && isComponentFull;
+
+                          return (
+                            <div className="space-y-2 pt-2 border-t border-white/5">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-zinc-300 block">
+                                  Posição Horizontal no Pai (Eixo X)
+                                </label>
+                                <span className="text-[10px] text-zinc-500">
+                                  Alinhamento do bloco
+                                </span>
+                              </div>
+                              <SegmentedControl<ContainerAlignX>
+                                value={selectedSection.layout.containerAlignX || "center"}
+                                onChange={(ax) =>
+                                  updateSectionLayout(selectedSection.id, {
+                                    containerAlignX: ax,
+                                  })
+                                }
+                                columns={3}
+                                size="sm"
+                                options={[
+                                  { value: "start", label: "Esquerda", icon: <AlignLeft className="w-3 h-3" /> },
+                                  { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
+                                  { value: "end", label: "Direita", icon: <AlignRight className="w-3 h-3" /> },
+                                ]}
+                              />
+
+                              {hasNoHorizontalFreedom ? (
+                                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1.5">
+                                  <div className="flex items-center gap-1.5 font-semibold text-amber-200">
+                                    <Info className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                                    <span>Bloco em Largura Total (100% da tela)</span>
+                                  </div>
+                                  <p className="text-[10px] text-amber-300/80 leading-relaxed">
+                                    Como o container e o componente ocupam 100% da largura, não há margem livre para mover. Para posicionar à <strong>Esquerda</strong> ou <strong>Direita</strong>:
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          componentWidth: "auto",
+                                        })
+                                      }
+                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
+                                    >
+                                      Mudar para Cápsula (Auto)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          containerWidth: "boxed",
+                                        })
+                                      }
+                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
+                                    >
+                                      Mudar Container para Padrão
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span>
+                                    Margem lateral livre ativa (
+                                    {isSectionFull ? "Componente Cápsula/Bloco" : "Container Delimitado"}
+                                    ).
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {/* Posição Vertical no Pai (Eixo Y) */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Posição Vertical no Pai (Eixo Y)
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Com altura definida
-                            </span>
-                          </div>
-                          <SegmentedControl<ContainerAlignY>
-                            value={selectedSection.layout.containerAlignY || "center"}
-                            onChange={(ay) =>
-                              updateSectionLayout(selectedSection.id, {
-                                containerAlignY: ay,
-                              })
-                            }
-                            columns={4}
-                            size="sm"
-                            options={[
-                              { value: "start", label: "Topo", icon: <ArrowUpToLine className="w-3 h-3" /> },
-                              { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
-                              { value: "end", label: "Base", icon: <ArrowDownToLine className="w-3 h-3" /> },
-                              { value: "stretch", label: "Distribuir", icon: <StretchVertical className="w-3 h-3" /> },
-                            ]}
-                          />
-                        </div>
+                        {(() => {
+                          const isMinHeightAuto =
+                            !selectedSection.layout.minHeight ||
+                            selectedSection.layout.minHeight === "auto";
+
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-zinc-300 block">
+                                  Posição Vertical no Pai (Eixo Y)
+                                </label>
+                                <span className="text-[10px] text-zinc-500">
+                                  Com altura definida
+                                </span>
+                              </div>
+                              <SegmentedControl<ContainerAlignY>
+                                value={selectedSection.layout.containerAlignY || "center"}
+                                onChange={(ay) =>
+                                  updateSectionLayout(selectedSection.id, {
+                                    containerAlignY: ay,
+                                  })
+                                }
+                                columns={4}
+                                size="sm"
+                                options={[
+                                  { value: "start", label: "Topo", icon: <ArrowUpToLine className="w-3 h-3" /> },
+                                  { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
+                                  { value: "end", label: "Base", icon: <ArrowDownToLine className="w-3 h-3" /> },
+                                  { value: "stretch", label: "Distribuir", icon: <StretchVertical className="w-3 h-3" /> },
+                                ]}
+                              />
+
+                              {isMinHeightAuto ? (
+                                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1.5">
+                                  <div className="flex items-center gap-1.5 font-semibold text-amber-200">
+                                    <Info className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                                    <span>Altura em 'Auto' (ajustada exatamente ao conteúdo)</span>
+                                  </div>
+                                  <p className="text-[10px] text-amber-300/80 leading-relaxed">
+                                    Para que <strong>Topo</strong>, <strong>Centro</strong> ou <strong>Base</strong> tenham efeito visual, ative uma altura mínima:
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          minHeight: "screen",
+                                        })
+                                      }
+                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
+                                    >
+                                      Definir 100vh
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          minHeight: "large",
+                                        })
+                                      }
+                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
+                                    >
+                                      Definir 75%
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          minHeight: "half",
+                                        })
+                                      }
+                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
+                                    >
+                                      Definir 50%
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                  <span>
+                                    Alinhando no espaço vertical livre de{" "}
+                                    {selectedSection.layout.minHeight === "screen"
+                                      ? "100vh"
+                                      : selectedSection.layout.minHeight === "large"
+                                      ? "75% da tela"
+                                      : "50% da tela"}
+                                    .
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {/* Afastamento Externo Vertical (Padding Y) */}
                         <div className="space-y-1.5 pt-2 border-t border-white/5">
@@ -1451,86 +1581,239 @@ export default function StudioPage() {
                               { value: "spacious", label: "Grande" },
                             ]}
                           />
+                          <span className="text-[10px] text-zinc-500 block">
+                            Distância mínima de segurança entre o conteúdo e as bordas da tela (evita encostar nas laterais do monitor e celular).
+                          </span>
                         </div>
                       </div>
                     </AccordionSection>
+                  </div>
 
                     {/* CAMADA 2: CONTAINER DO COMPONENTE (FILHO) */}
-                    <AccordionSection
-                      title="2. Container do Componente (Filho)"
-                      subtitle="Largura do componente, respiro e estilo do card"
-                      icon={Layers}
-                      defaultOpen={true}
+                    <div
+                      onMouseEnter={() => setActiveInspectorLayer("child")}
+                      onFocusCapture={() => setActiveInspectorLayer("child")}
                     >
-                      <div className="space-y-4">
-                        {/* Largura do Componente Filho */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Largura do Componente
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Comportamento
+                      <AccordionSection
+                        title="2. Container do Componente (Filho)"
+                        subtitle="Largura do componente, respiro e estilo do card"
+                        icon={Layers}
+                        defaultOpen={true}
+                      >
+                        <div className="space-y-4">
+                          {/* Largura do Componente Filho */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Largura do Componente
+                              </label>
+                              <span className="text-[10px] text-zinc-500">
+                                Escala decrescente
+                              </span>
+                            </div>
+                            <SegmentedControl<ComponentWidth>
+                              value={
+                                selectedSection.layout.componentWidth ||
+                                (selectedSection.type === "header.capsule"
+                                  ? "auto"
+                                  : "full")
+                              }
+                              onChange={(cw) =>
+                                updateSectionLayout(selectedSection.id, {
+                                  componentWidth: cw,
+                                })
+                              }
+                              columns={4}
+                              size="sm"
+                              options={[
+                                { value: "full", label: "Total", icon: <Maximize2 className="w-3 h-3" /> },
+                                { value: "boxed", label: "Bloco", icon: <LayoutGrid className="w-3 h-3" /> },
+                                { value: "narrow", label: "Estreito", icon: <Columns2 className="w-3 h-3" /> },
+                                { value: "auto", label: "Cápsula", icon: <Box className="w-3 h-3" /> },
+                              ]}
+                            />
+                            <span className="text-[10px] text-zinc-500 block">
+                              Total (100% do pai) &gt; Bloco (~1024px) &gt; Estreito (~768px) &gt; Cápsula (auto/justo ao conteúdo).
                             </span>
                           </div>
-                          <SegmentedControl<ComponentWidth>
-                            value={
-                              selectedSection.layout.componentWidth ||
-                              (selectedSection.type === "header.capsule"
-                                ? "auto"
-                                : "full")
-                            }
-                            onChange={(cw) =>
-                              updateSectionLayout(selectedSection.id, {
-                                componentWidth: cw,
-                              })
-                            }
-                            columns={4}
-                            size="sm"
-                            options={[
-                              { value: "full", label: "Total (100%)", icon: <Maximize2 className="w-3 h-3" /> },
-                              { value: "auto", label: "Cápsula", icon: <Box className="w-3 h-3" /> },
-                              { value: "boxed", label: "Bloco", icon: <LayoutGrid className="w-3 h-3" /> },
-                              { value: "narrow", label: "Estreito", icon: <Columns2 className="w-3 h-3" /> },
-                            ]}
-                          />
-                          <span className="text-[10px] text-zinc-500 block">
-                            Use "Cápsula" para cabeçalhos flutuantes ou cards compactos que abraçam o conteúdo.
-                          </span>
-                        </div>
 
-                        {/* Espessura Interna Vertical (Padding Inner) */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Espessura Interna (Padding Vertical)
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Respiro interno
+                          {/* Direção do Fluxo (Orientação: Coluna, Linha ou Responsivo) */}
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Orientação do Container (Fluxo)
+                              </label>
+                              <span className="text-[10px] text-zinc-500">
+                                Disposição dos elementos
+                              </span>
+                            </div>
+                            <SegmentedControl<LayoutDirection>
+                              value={
+                                selectedSection.layout.direction ||
+                                (selectedSection.type.startsWith("header.")
+                                  ? "row"
+                                  : "col")
+                              }
+                              onChange={(dir) =>
+                                updateSectionLayout(selectedSection.id, {
+                                  direction: dir,
+                                })
+                              }
+                              columns={3}
+                              size="sm"
+                              options={[
+                                { value: "col", label: "Coluna", icon: <StretchVertical className="w-3 h-3" /> },
+                                { value: "row", label: "Linha", icon: <StretchHorizontal className="w-3 h-3" /> },
+                                { value: "responsive", label: "Responsivo", icon: <Smartphone className="w-3 h-3" /> },
+                              ]}
+                            />
+                            <span className="text-[10px] text-zinc-500 block">
+                              {selectedSection.layout.direction === "responsive"
+                                ? "Coluna no mobile (vertical) e linha no desktop (horizontal)."
+                                : selectedSection.layout.direction === "col"
+                                ? "Empilhamento vertical (bloco/card de cima para baixo)."
+                                : "Barra ou linha horizontal dos elementos."}
                             </span>
                           </div>
-                          <SegmentedControl<PaddingScale>
-                            value={
-                              selectedSection.layout.paddingInner ||
-                              (selectedSection.type.startsWith("header.")
-                                ? "compact"
-                                : "none")
-                            }
-                            onChange={(scale) =>
-                              updateSectionLayout(selectedSection.id, {
-                                paddingInner: scale,
-                              })
-                            }
-                            columns={4}
-                            size="sm"
-                            options={[
-                              { value: "none", label: "Zero" },
-                              { value: "compact", label: "Fino" },
-                              { value: "normal", label: "Padrão" },
-                              { value: "spacious", label: "Amplo" },
-                            ]}
-                          />
-                        </div>
+
+                          {/* Inverter Ordem dos Elementos */}
+                          <div className="pt-1">
+                            <ModernToggle
+                              label="Inverter Ordem dos Elementos"
+                              description="Inverte a sequência horizontal ou vertical dos blocos"
+                              checked={Boolean(selectedSection.layout.reverse)}
+                              onChange={(rev) =>
+                                updateSectionLayout(selectedSection.id, {
+                                  reverse: rev,
+                                })
+                              }
+                            />
+                          </div>
+
+                          {/* Espessura Interna Vertical (Padding Y Interno) */}
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Espessura Interna Vertical (Padding Y)
+                              </label>
+                              <span className="text-[10px] text-zinc-500">
+                                Altura/respiro interno
+                              </span>
+                            </div>
+                            <SegmentedControl<PaddingScale>
+                              value={
+                                selectedSection.layout.paddingInner ||
+                                (selectedSection.type.startsWith("header.")
+                                  ? "compact"
+                                  : "none")
+                              }
+                              onChange={(scale) =>
+                                updateSectionLayout(selectedSection.id, {
+                                  paddingInner: scale,
+                                })
+                              }
+                              columns={4}
+                              size="sm"
+                              options={[
+                                { value: "none", label: "Zero" },
+                                { value: "compact", label: "Fino" },
+                                { value: "normal", label: "Padrão" },
+                                { value: "spacious", label: "Amplo" },
+                              ]}
+                            />
+                          </div>
+
+                          {/* Respiro Interno Lateral (Padding X Interno) */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Respiro Interno Lateral (Padding X)
+                              </label>
+                              <span className="text-[10px] text-zinc-500">
+                                Margem lateral interna
+                              </span>
+                            </div>
+                            <SegmentedControl<PaddingScale>
+                              value={
+                                selectedSection.layout.paddingInnerX ||
+                                (selectedSection.type.startsWith("header.")
+                                  ? "normal"
+                                  : "none")
+                              }
+                              onChange={(scale) =>
+                                updateSectionLayout(selectedSection.id, {
+                                  paddingInnerX: scale,
+                                })
+                              }
+                              columns={4}
+                              size="sm"
+                              options={[
+                                { value: "none", label: "Zero" },
+                                { value: "compact", label: "Fino" },
+                                { value: "normal", label: "Padrão" },
+                                { value: "spacious", label: "Amplo" },
+                              ]}
+                            />
+                            {(() => {
+                              const isCol = selectedSection.layout.direction === "col";
+                              const alignItems = selectedSection.layout.alignItems || "center";
+                              const isCentered = alignItems === "center";
+                              const isAuto = (selectedSection.layout.componentWidth || "full") === "auto";
+
+                              if (!isCol) {
+                                return (
+                                  <span className="text-[10px] text-zinc-500 block">
+                                    Em Linha: afasta os elementos das pontas esquerda e direita do card/barra.
+                                  </span>
+                                );
+                              }
+
+                              if (isAuto) {
+                                return (
+                                  <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                                    <Check className="w-3 h-3" />
+                                    <span>Em Cápsula: o Padding X define a largura e o respiro lateral do card.</span>
+                                  </span>
+                                );
+                              }
+
+                              if (isCentered) {
+                                return (
+                                  <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 space-y-1.5">
+                                    <p className="flex items-start gap-1.5">
+                                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
+                                      <span>
+                                        <strong>Aviso de Modo Coluna:</strong> Como os elementos estão centralizados no meio da tela, o Padding X só terá efeito visível quando os elementos forem alinhados a um canto ou esticados na <strong>Camada 3</strong> (ou em largura <em>Cápsula</em>).
+                                      </span>
+                                    </p>
+                                    <div className="flex items-center gap-1.5 pt-0.5 pl-5">
+                                      <button
+                                        type="button"
+                                        onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "start" })}
+                                        className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
+                                      >
+                                        Alinhar à Esquerda
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "stretch" })}
+                                        className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
+                                      >
+                                        Esticar Largura
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                                  <Check className="w-3 h-3" />
+                                  <span>Elementos alinhados: o Padding X define o recuo lateral exato das bordas.</span>
+                                </span>
+                              );
+                            })()}
+                          </div>
 
                         {/* Acabamento da Superfície (Card) */}
                         <div className="space-y-2 pt-2 border-t border-white/5">
@@ -1697,168 +1980,234 @@ export default function StudioPage() {
                         </div>
                       </div>
                     </AccordionSection>
+                  </div>
 
                     {/* CAMADA 3: ELEMENTOS INTERNOS (FLEX & FLUXO) */}
-                    <AccordionSection
-                      title="3. Elementos Internos (Flex & Fluxo)"
-                      subtitle="Orientação, distribuição e espaçamento interno"
-                      icon={Sliders}
-                      defaultOpen={true}
+                    <div
+                      onMouseEnter={() => setActiveInspectorLayer("inner")}
+                      onFocusCapture={() => setActiveInspectorLayer("inner")}
                     >
-                      <div className="space-y-4">
-                        {/* Direção do Fluxo (Orientação: Coluna, Linha ou Responsivo) */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Direção do Fluxo (Orientação)
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Disposição dos elementos
-                            </span>
-                          </div>
-                          <SegmentedControl<LayoutDirection>
-                            value={
-                              selectedSection.layout.direction ||
-                              (selectedSection.type.startsWith("header.")
-                                ? "row"
-                                : "col")
-                            }
-                            onChange={(dir) =>
-                              updateSectionLayout(selectedSection.id, {
-                                direction: dir,
-                              })
-                            }
-                            columns={3}
-                            size="sm"
-                            options={[
-                              { value: "col", label: "Coluna", icon: <StretchVertical className="w-3 h-3" /> },
-                              { value: "row", label: "Linha", icon: <StretchHorizontal className="w-3 h-3" /> },
-                              { value: "responsive", label: "Responsivo", icon: <Smartphone className="w-3 h-3" /> },
-                            ]}
-                          />
-                          <span className="text-[10px] text-zinc-500 block">
-                            {selectedSection.layout.direction === "responsive"
-                              ? "Coluna no mobile (vertical) e linha no desktop (horizontal)."
-                              : selectedSection.layout.direction === "row"
-                              ? "Elementos alinhados em linha horizontal."
-                              : "Empilhamento vertical padrão dos elementos."}
-                          </span>
-                        </div>
+                      <AccordionSection
+                        title="3. Elementos Internos (Distribuição & Alinhamento)"
+                        subtitle="Posicionamento e alinhamento dos elementos dentro do fluxo"
+                        icon={Sliders}
+                        defaultOpen={true}
+                      >
+                        {(() => {
+                          const direction =
+                            selectedSection.layout.direction ||
+                            (selectedSection.type.startsWith("header.") ? "row" : "col");
+                          const isCol = direction === "col";
+                          const isRow = direction === "row";
+                          const isResponsive = direction === "responsive";
 
-                        {/* Inverter Ordem dos Elementos */}
-                        <div className="pt-1">
-                          <ModernToggle
-                            label="Inverter Ordem dos Elementos"
-                            description="Inverte a sequência horizontal ou vertical dos blocos"
-                            checked={Boolean(selectedSection.layout.reverse)}
-                            onChange={(rev) =>
-                              updateSectionLayout(selectedSection.id, {
-                                reverse: rev,
-                              })
-                            }
-                          />
-                        </div>
+                          return (
+                            <div className="space-y-4">
+                              {/* SE FOR COLUNA: O eixo X é controlado por alignItems (Cross-Axis) e o eixo Y por distribution (Main-Axis) */}
+                              {isCol ? (
+                                <>
+                                  {/* 1. Alinhamento Horizontal (Eixo X) */}
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-semibold text-zinc-300 block">
+                                        Alinhamento Horizontal (Eixo X)
+                                      </label>
+                                      <span className="text-[10px] text-zinc-500">
+                                        Margens e largura
+                                      </span>
+                                    </div>
+                                    <SegmentedControl<LayoutAlignItems>
+                                      value={selectedSection.layout.alignItems || "center"}
+                                      onChange={(al) =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          alignItems: al,
+                                        })
+                                      }
+                                      columns={4}
+                                      size="sm"
+                                      options={[
+                                        { value: "start", label: "Esq", icon: <AlignLeft className="w-3 h-3" /> },
+                                        { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
+                                        { value: "end", label: "Dir", icon: <AlignRight className="w-3 h-3" /> },
+                                        { value: "stretch", label: "Esticar", icon: <StretchHorizontal className="w-3 h-3" /> },
+                                      ]}
+                                    />
+                                    {/* Dica Contextual e Botões de Ação Rápida */}
+                                    {(selectedSection.layout.alignItems || "center") === "center" ? (
+                                      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 space-y-1.5">
+                                        <p>
+                                          ℹ️ Itens centralizados no eixo X. Alinhe à Esquerda, Direita ou Esticar para que o <strong>Respiro Lateral (Padding X)</strong> delimite o recuo das margens.
+                                        </p>
+                                        <div className="flex items-center gap-1.5 pt-0.5">
+                                          <button
+                                            type="button"
+                                            onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "start" })}
+                                            className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
+                                          >
+                                            Alinhar à Esquerda
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "stretch" })}
+                                            className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
+                                          >
+                                            Esticar Largura
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                                        <Check className="w-3 h-3" />
+                                        <span>Alinhamento ativo: o Padding X define o recuo exato entre o conteúdo e a parede do card.</span>
+                                      </span>
+                                    )}
+                                  </div>
 
-                        {/* Distribuição Horizontal Interna (Flex Justify) */}
-                        <div className="space-y-1.5 pt-2 border-t border-white/5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Distribuição Horizontal Interna
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Eixo principal
-                            </span>
-                          </div>
-                          <SegmentedControl<LayoutDistribution>
-                            value={
-                              selectedSection.layout.distribution ||
-                              (selectedSection.type.startsWith("header.")
-                                ? "between"
-                                : "center")
-                            }
-                            onChange={(dist) =>
-                              updateSectionLayout(selectedSection.id, {
-                                distribution: dist,
-                              })
-                            }
-                            columns={5}
-                            size="sm"
-                            options={[
-                              { value: "start", label: "Esq", icon: <AlignLeft className="w-3 h-3" /> },
-                              { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
-                              { value: "end", label: "Dir", icon: <AlignRight className="w-3 h-3" /> },
-                              { value: "between", label: "Entre", icon: <AlignJustify className="w-3 h-3" /> },
-                              { value: "around", label: "Igual", icon: <Equal className="w-3 h-3" /> },
-                            ]}
-                          />
-                        </div>
+                                  {/* 2. Distribuição Vertical (Eixo Y) */}
+                                  <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-semibold text-zinc-300 block">
+                                        Distribuição Vertical (Eixo Y)
+                                      </label>
+                                      <span className="text-[10px] text-zinc-500">
+                                        Eixo principal da coluna
+                                      </span>
+                                    </div>
+                                    <SegmentedControl<LayoutDistribution>
+                                      value={selectedSection.layout.distribution || "start"}
+                                      onChange={(dist) =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          distribution: dist,
+                                        })
+                                      }
+                                      columns={5}
+                                      size="sm"
+                                      options={[
+                                        { value: "start", label: "Topo", icon: <ArrowUpToLine className="w-3 h-3" /> },
+                                        { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
+                                        { value: "end", label: "Base", icon: <ArrowDownToLine className="w-3 h-3" /> },
+                                        { value: "between", label: "Entre", icon: <AlignJustify className="w-3 h-3" /> },
+                                        { value: "around", label: "Igual", icon: <Equal className="w-3 h-3" /> },
+                                      ]}
+                                    />
+                                    <span className="text-[10px] text-zinc-500 block">
+                                      Posiciona os blocos (Logo, Menu e Botões) verticalmente pelo eixo Y do container.
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  {/* SE FOR LINHA OU RESPONSIVO: O eixo X é distribution (Main-Axis) e o eixo Y é alignItems (Cross-Axis) */}
+                                  {/* 1. Distribuição Horizontal (Eixo X) */}
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-semibold text-zinc-300 block">
+                                        Distribuição Horizontal (Eixo X)
+                                      </label>
+                                      <span className="text-[10px] text-zinc-500">
+                                        {isResponsive ? "Desktop (Linha)" : "Eixo principal da linha"}
+                                      </span>
+                                    </div>
+                                    <SegmentedControl<LayoutDistribution>
+                                      value={
+                                        selectedSection.layout.distribution ||
+                                        (selectedSection.type.startsWith("header.") ? "between" : "center")
+                                      }
+                                      onChange={(dist) =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          distribution: dist,
+                                        })
+                                      }
+                                      columns={5}
+                                      size="sm"
+                                      options={[
+                                        { value: "start", label: "Esq", icon: <AlignLeft className="w-3 h-3" /> },
+                                        { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
+                                        { value: "end", label: "Dir", icon: <AlignRight className="w-3 h-3" /> },
+                                        { value: "between", label: "Entre", icon: <AlignJustify className="w-3 h-3" /> },
+                                        { value: "around", label: "Igual", icon: <Equal className="w-3 h-3" /> },
+                                      ]}
+                                    />
+                                    <span className="text-[10px] text-zinc-500 block">
+                                      O Respiro Lateral (Padding X) do container afasta os elementos das extremidades esquerda e direita.
+                                    </span>
+                                  </div>
 
-                        {/* Alinhamento Vertical Interno (Align Items) */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Alinhamento Transversal Interno
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Eixo cruzado
-                            </span>
-                          </div>
-                          <SegmentedControl<LayoutAlignItems>
-                            value={selectedSection.layout.alignItems || "center"}
-                            onChange={(al) =>
-                              updateSectionLayout(selectedSection.id, {
-                                alignItems: al,
-                              })
-                            }
-                            columns={4}
-                            size="sm"
-                            options={[
-                              { value: "start", label: "Topo", icon: <ArrowUpToLine className="w-3 h-3" /> },
-                              { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
-                              { value: "end", label: "Base", icon: <ArrowDownToLine className="w-3 h-3" /> },
-                              { value: "stretch", label: "Esticar", icon: <StretchVertical className="w-3 h-3" /> },
-                            ]}
-                          />
-                        </div>
+                                  {/* 2. Alinhamento Vertical (Eixo Y) */}
+                                  <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-semibold text-zinc-300 block">
+                                        Alinhamento Vertical (Eixo Y)
+                                      </label>
+                                      <span className="text-[10px] text-zinc-500">
+                                        Nivelamento de altura
+                                      </span>
+                                    </div>
+                                    <SegmentedControl<LayoutAlignItems>
+                                      value={selectedSection.layout.alignItems || "center"}
+                                      onChange={(al) =>
+                                        updateSectionLayout(selectedSection.id, {
+                                          alignItems: al,
+                                        })
+                                      }
+                                      columns={4}
+                                      size="sm"
+                                      options={[
+                                        { value: "start", label: "Topo", icon: <ArrowUpToLine className="w-3 h-3" /> },
+                                        { value: "center", label: "Centro", icon: <AlignCenter className="w-3 h-3" /> },
+                                        { value: "end", label: "Base", icon: <ArrowDownToLine className="w-3 h-3" /> },
+                                        { value: "stretch", label: "Esticar", icon: <StretchVertical className="w-3 h-3" /> },
+                                      ]}
+                                    />
+                                  </div>
+                                </>
+                              )}
 
-                        {/* Espaçamento entre Elementos (Gap) */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Espaçamento entre Elementos (Gap)
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Distância entre itens
-                            </span>
-                          </div>
-                          <SegmentedControl<LayoutGap>
-                            value={selectedSection.layout.gap || "normal"}
-                            onChange={(g) =>
-                              updateSectionLayout(selectedSection.id, {
-                                gap: g,
-                              })
-                            }
-                            columns={5}
-                            size="sm"
-                            options={[
-                              { value: "none", label: "0" },
-                              { value: "compact", label: "16px" },
-                              { value: "normal", label: "32px" },
-                              { value: "spacious", label: "48px" },
-                              { value: "monumental", label: "64px" },
-                            ]}
-                          />
-                        </div>
-                      </div>
+                              {/* 3. Espaçamento entre Elementos (Gap) */}
+                              <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-semibold text-zinc-300 block">
+                                    Espaçamento entre Elementos (Gap)
+                                  </label>
+                                  <span className="text-[10px] text-zinc-500">
+                                    Distância entre itens
+                                  </span>
+                                </div>
+                                <SegmentedControl<LayoutGap>
+                                  value={selectedSection.layout.gap || "normal"}
+                                  onChange={(g) =>
+                                    updateSectionLayout(selectedSection.id, {
+                                      gap: g,
+                                    })
+                                  }
+                                  columns={5}
+                                  size="sm"
+                                  options={[
+                                    { value: "none", label: "0" },
+                                    { value: "compact", label: "16px" },
+                                    { value: "normal", label: "32px" },
+                                    { value: "spacious", label: "48px" },
+                                    { value: "monumental", label: "64px" },
+                                  ]}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
                     </AccordionSection>
+                  </div>
 
                     {/* CAMADA 4: FUNDO & DIVISORES DA SEÇÃO */}
-                    <AccordionSection
-                      title="4. Fundo & Divisores da Seção"
-                      subtitle="Cores de fundo, gradientes, texturas e divisores"
-                      icon={ImageIcon}
-                      defaultOpen={false}
+                    <div
+                      onMouseEnter={() => setActiveInspectorLayer("bg")}
+                      onFocusCapture={() => setActiveInspectorLayer("bg")}
                     >
+                      <AccordionSection
+                        title="4. Fundo & Divisores da Seção"
+                        subtitle="Cores de fundo, gradientes, texturas e divisores"
+                        icon={ImageIcon}
+                        defaultOpen={false}
+                      >
                       <div className="space-y-4">
                         {/* Cores da Seção */}
                         <div className="space-y-2.5">
@@ -2109,7 +2458,8 @@ export default function StudioPage() {
                       </div>
                     </AccordionSection>
                   </div>
-                )}
+                </div>
+              )}
 
                 {/* ABA 3: TIPOGRAFIA, COR E ÍCONE POR ELEMENTO (Micro Camada) */}
                 {rightTab === "typography" && (

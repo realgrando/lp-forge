@@ -100,6 +100,7 @@ export const HeaderCapsuleSection = createSection<HeaderCapsuleContent>({
     layout: {
       paddingY: "none",
       paddingInner: "compact",
+      paddingInnerX: "normal",
       paddingX: "normal",
       containerWidth: "boxed",
       componentWidth: "auto",
@@ -136,7 +137,9 @@ export const HeaderCapsuleSection = createSection<HeaderCapsuleContent>({
   },
   Component: ({ content, layout, styles, theme }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const isFullWidth = (layout?.containerWidth || "boxed") === "full";
+    const isEdgeToEdge =
+      (layout?.containerWidth || "boxed") === "full" &&
+      (layout?.componentWidth || "auto") === "full";
     const surfaceStyle = styles.surfaceVariant || theme.tokens.surfaceStyle;
     const radiusPreset = styles.borderRadius || "full";
     const accentColor = styles.customAccent || theme.palette.accent;
@@ -149,14 +152,33 @@ export const HeaderCapsuleSection = createSection<HeaderCapsuleContent>({
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
     const hasMobileMenu = hasNavLinks;
 
-    const innerYClasses: Record<string, string> = {
-      none: "py-1.5 min-h-[48px]",
-      compact: "py-2 md:py-2.5 min-h-[56px] md:min-h-[64px]",
-      normal: "py-3 md:py-3.5 min-h-[64px] md:min-h-[72px]",
-      spacious: "py-4 md:py-5 min-h-[76px] md:min-h-[88px]",
-    };
+    const direction = layout?.direction || "row";
+    const isCol = direction === "col";
+    const isResponsive = direction === "responsive";
+    const isStretchY = layout?.containerAlignY === "stretch";
 
-    const padXClasses: Record<string, string> = {
+    const innerYClasses: Record<string, string> = isCol
+      ? {
+          none: "py-2 min-h-[160px]",
+          compact: "py-3 min-h-[220px]",
+          normal: "py-5 min-h-[300px]",
+          spacious: "py-8 min-h-[420px]",
+        }
+      : isResponsive
+      ? {
+          none: "py-2 min-h-[160px] md:min-h-[48px] md:py-1.5",
+          compact: "py-3 min-h-[220px] md:min-h-[64px] md:py-2",
+          normal: "py-5 min-h-[300px] md:min-h-[72px] md:py-3",
+          spacious: "py-8 min-h-[420px] md:min-h-[88px] md:py-4",
+        }
+      : {
+          none: "py-1.5 min-h-[48px]",
+          compact: "py-2 md:py-2.5 min-h-[56px] md:min-h-[64px]",
+          normal: "py-3 md:py-3.5 min-h-[64px] md:min-h-[72px]",
+          spacious: "py-4 md:py-5 min-h-[76px] md:min-h-[88px]",
+        };
+
+    const innerPadXClasses: Record<string, string> = {
       none: "px-3",
       compact: "px-4 sm:px-6",
       normal: "px-5 sm:px-8",
@@ -164,7 +186,7 @@ export const HeaderCapsuleSection = createSection<HeaderCapsuleContent>({
     };
 
     const innerY = innerYClasses[layout?.paddingInner || "compact"];
-    const padX = padXClasses[layout?.paddingX || "normal"];
+    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
 
     const getNormalizedHref = (rawUrl?: string) => {
       if (!rawUrl || rawUrl === "#") return "#";
@@ -179,6 +201,27 @@ export const HeaderCapsuleSection = createSection<HeaderCapsuleContent>({
         return `#${trimmed}`;
       }
       return trimmed;
+    };
+
+    const alignClasses: Record<LayoutAlignItems, string> = {
+      start: "items-start",
+      center: "items-center",
+      end: "items-end",
+      stretch: "items-stretch",
+    };
+    const effectiveAlign = alignClasses[layout?.alignItems || "center"];
+    const isReverse = Boolean(layout?.reverse);
+
+    const getDirectionClass = () => {
+      if (direction === "col") {
+        return isReverse ? "flex-col-reverse" : "flex-col";
+      }
+      if (direction === "responsive") {
+        return isReverse
+          ? "flex-col-reverse md:flex-row-reverse"
+          : "flex-col md:flex-row";
+      }
+      return isReverse ? "flex-row-reverse" : "flex-row";
     };
 
     const effectiveDistribution = layout?.distribution || "between";
@@ -196,22 +239,31 @@ export const HeaderCapsuleSection = createSection<HeaderCapsuleContent>({
     const isAutoWidth = (layout?.componentWidth || "auto") === "auto";
 
     return (
-      <header className={cn("relative z-40 transition-all", isAutoWidth ? "w-auto max-w-fit" : "w-full")}>
+      <header
+        className={cn(
+          "relative z-40 transition-all",
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          isStretchY && "h-full flex-1 flex flex-col"
+        )}
+      >
         <div
           className={cn(
-            "flex items-center transition-all shadow-2xl border border-white/10",
+            "flex transition-all shadow-2xl border border-white/10",
             isAutoWidth ? "w-auto max-w-fit gap-4 sm:gap-6" : "w-full",
+            isStretchY && "h-full flex-1",
             justifyClass,
+            effectiveAlign,
+            getDirectionClass(),
             innerY,
-            padX,
-            isFullWidth
+            innerPadX,
+            isEdgeToEdge
               ? "rounded-none border-l-0 border-r-0 border-t-0"
               : getRadiusClass(radiusPreset),
             getSurfaceClasses(surfaceStyle)
           )}
           style={{
             backgroundColor: styles.customSurface || undefined,
-            ...(styles.borderWidth && styles.borderWidth !== "0" && !isFullWidth
+            ...(styles.borderWidth && styles.borderWidth !== "0" && !isEdgeToEdge
               ? {
                   borderWidth: `${styles.borderWidth}px`,
                   borderColor: styles.borderColor || `${accentColor}40`,

@@ -16,7 +16,8 @@ import {
   SectionNode,
   ThemeConfig,
 } from "@/types/site";
-import { ArrowUp, ArrowDown, Copy, Trash2, EyeOff, Sparkles } from "lucide-react";
+import { ArrowUp, ArrowDown, Copy, Trash2, EyeOff, Sparkles, Box, Layers } from "lucide-react";
+import { useStudioStore } from "@/store/useStudioStore";
 
 interface SectionWrapperProps {
   section: SectionNode;
@@ -87,10 +88,10 @@ export const CONTAINER_ALIGN_Y_MAP: Record<ContainerAlignY, string> = {
 
 // Largura do Componente Filho (Meso-camada)
 export const COMPONENT_WIDTH_MAP: Record<ComponentWidth, string> = {
-  full: "w-full",
-  auto: "w-auto max-w-fit",
+  full: "w-full max-w-none",
   boxed: "w-full max-w-5xl",
   narrow: "w-full max-w-3xl",
+  auto: "w-auto max-w-fit",
 };
 
 // Limite de Leitura de Texto (Content Max Width / Prosa — Camada Interna Independente)
@@ -156,6 +157,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   children,
 }) => {
   const { layout, styles } = section;
+  const activeInspectorLayer = useStudioStore((s) => s.activeInspectorLayer);
 
   // Se estiver oculta e não estiver no modo editor, não renderiza nada
   if (layout.hidden && !isEditor) {
@@ -424,28 +426,45 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           "w-full flex transition-all duration-200 relative z-10",
           CONTAINER_MAX_WIDTH_CLASSES[effectiveContainerWidth],
           CONTAINER_ALIGN_X_MAP[effectiveAlignX],
-          rawContainer || isHeader ? "px-0" : PADDING_X_MAP[effectivePaddingX],
-          effectiveAlignY === "stretch" && "h-full flex-1"
+          rawContainer ? "px-0" : PADDING_X_MAP[effectivePaddingX],
+          effectiveAlignY === "stretch" && "h-full flex-1",
+          isEditor &&
+            isSelected &&
+            activeInspectorLayer === "parent" &&
+            "outline-2 outline-dashed outline-sky-400 bg-sky-500/[0.02] rounded-xl"
         )}
       >
+        {isEditor && isSelected && activeInspectorLayer === "parent" && (
+          <div className="absolute -top-3 left-3 z-50 px-2 py-0.5 rounded-full bg-sky-500 text-black text-[9px] font-bold shadow-lg uppercase tracking-wider flex items-center gap-1 pointer-events-none">
+            <Box className="w-2.5 h-2.5" />
+            <span>Container Pai ({effectiveContainerWidth.toUpperCase()})</span>
+          </div>
+        )}
+
         {/* Camada 2: Invólucro do Componente (Container Filho) */}
         <div
           data-layer="component-wrapper"
           className={cn(
-            "transition-all duration-200 flex",
+            "transition-all duration-200 flex relative",
             COMPONENT_WIDTH_MAP[effectiveComponentWidth],
             effectiveAlignX === "start"
               ? "mr-auto ml-0 justify-start"
               : effectiveAlignX === "end"
               ? "ml-auto mr-0 justify-end"
               : "mx-auto justify-center",
-            effectiveAlignY === "stretch" && "h-full flex-1 flex-col justify-between",
+            effectiveAlignY === "stretch" && "h-full flex-1 flex flex-col",
             isEditor &&
               isSelected &&
-              !isHeader &&
-              "outline-1 outline-dashed outline-[#F4B400]/30"
+              (activeInspectorLayer === "child" || !activeInspectorLayer) &&
+              "outline-2 outline-dashed outline-[#F4B400] bg-[#F4B400]/[0.02] rounded-xl"
           )}
         >
+          {isEditor && isSelected && (activeInspectorLayer === "child" || !activeInspectorLayer) && (
+            <div className="absolute -top-3 left-3 z-50 px-2 py-0.5 rounded-full bg-[#F4B400] text-black text-[9px] font-bold shadow-lg uppercase tracking-wider flex items-center gap-1 pointer-events-none">
+              <Layers className="w-2.5 h-2.5" />
+              <span>Container Filho ({effectiveComponentWidth.toUpperCase()})</span>
+            </div>
+          )}
           {children}
         </div>
       </div>

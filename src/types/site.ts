@@ -103,8 +103,9 @@ export interface SectionLayout {
   hidden?: boolean;
 
   // CAMADA 2: Container Filho (O Componente)
-  componentWidth?: ComponentWidth;   // Largura do componente (full, auto/cápsula, boxed, narrow)
-  paddingInner?: PaddingScale;       // Respiro interno do componente
+  componentWidth?: ComponentWidth;   // Largura do componente (full, boxed, narrow, auto/cápsula)
+  paddingInner?: PaddingScale;       // Respiro interno vertical (Y)
+  paddingInnerX?: PaddingScale;      // Respiro interno lateral (X)
 
   // CAMADA 3: Elementos Internos (Flex & Fluxo)
   direction?: LayoutDirection;       // col, row, responsive

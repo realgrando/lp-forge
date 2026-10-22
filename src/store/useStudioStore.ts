@@ -88,6 +88,7 @@ interface StudioState {
   past: SiteDocument[];
   future: SiteDocument[];
   selectedSectionId: string | null;
+  activeInspectorLayer: "parent" | "child" | "inner" | "bg" | null;
   viewport: DeviceViewport;
   activeTemplateId: string | null;
   templates: TemplateRecord[];
@@ -96,6 +97,7 @@ interface StudioState {
 
   // Navegação e Seleção
   selectSection: (id: string | null) => void;
+  setActiveInspectorLayer: (layer: "parent" | "child" | "inner" | "bg" | null) => void;
   setViewport: (viewport: DeviceViewport) => void;
   switchModeWithPreset: (mode: SiteMode) => void;
 
@@ -177,13 +179,16 @@ export const useStudioStore = create<StudioState>((set, get) => {
     past: [],
     future: [],
     selectedSectionId: null,
+    activeInspectorLayer: null,
     viewport: "desktop",
     activeTemplateId: null,
     templates: [],
     sectionPacks: [],
     customThemePresets: [],
 
-    selectSection: (id) => set({ selectedSectionId: id }),
+    selectSection: (id) => set({ selectedSectionId: id, activeInspectorLayer: id ? "child" : null }),
+
+    setActiveInspectorLayer: (layer) => set({ activeInspectorLayer: layer }),
 
     setViewport: (viewport) => set({ viewport }),
 

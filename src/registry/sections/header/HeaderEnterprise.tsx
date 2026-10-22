@@ -156,7 +156,9 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
   },
   Component: ({ content, layout, styles, theme }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const isFullWidth = (layout?.containerWidth || "full") === "full";
+    const isEdgeToEdge =
+      (layout?.containerWidth || "full") === "full" &&
+      (layout?.componentWidth || "full") === "full";
     const surfaceStyle = styles.surfaceVariant || theme.tokens.surfaceStyle;
     const radiusPreset = styles.borderRadius || theme.tokens.borderRadius;
     const accentColor = styles.customAccent || theme.palette.accent;
@@ -169,18 +171,37 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
     const hasMobileMenu = hasNavLinks;
 
-    const innerYClasses: Record<string, string> = {
-      none: "py-1.5 min-h-[48px]",
-      compact: "py-2.5 md:py-3.5 min-h-[56px] md:min-h-[68px]",
-      normal: "py-3 md:py-4 min-h-[64px] md:min-h-[80px]",
-      spacious: "py-4 md:py-6 min-h-[76px] md:min-h-[96px]",
-    };
+    const direction = layout?.direction || "row";
+    const isCol = direction === "col";
+    const isResponsive = direction === "responsive";
+    const isStretchY = layout?.containerAlignY === "stretch";
 
-    const padXClasses: Record<string, string> = {
+    const innerYClasses: Record<string, string> = isCol
+      ? {
+          none: "py-2 min-h-[160px]",
+          compact: "py-3 min-h-[220px]",
+          normal: "py-5 min-h-[300px]",
+          spacious: "py-8 min-h-[420px]",
+        }
+      : isResponsive
+      ? {
+          none: "py-2 min-h-[160px] md:min-h-[48px] md:py-1.5",
+          compact: "py-3 min-h-[220px] md:min-h-[68px] md:py-2.5",
+          normal: "py-5 min-h-[300px] md:min-h-[80px] md:py-3",
+          spacious: "py-8 min-h-[420px] md:min-h-[96px] md:py-4",
+        }
+      : {
+          none: "py-1.5 min-h-[48px]",
+          compact: "py-2.5 md:py-3.5 min-h-[56px] md:min-h-[68px]",
+          normal: "py-3 md:py-4 min-h-[64px] md:min-h-[80px]",
+          spacious: "py-4 md:py-6 min-h-[76px] md:min-h-[96px]",
+        };
+
+    const innerPadXClasses: Record<string, string> = {
       none: "px-0",
-      compact: "px-3 sm:px-6",
-      normal: "px-4 sm:px-8 lg:px-12",
-      spacious: "px-5 sm:px-12 lg:px-24",
+      compact: "px-3 sm:px-5",
+      normal: "px-5 sm:px-8",
+      spacious: "px-8 sm:px-14",
     };
 
     const gapClasses: Record<LayoutGap, string> = {
@@ -214,21 +235,38 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
     };
 
     const effectiveDistribution = layout?.distribution || "between";
-    const contentBoxPositionClass =
-      effectiveDistribution === "start"
+    const contentBoxPositionClass = isCol
+      ? layout?.alignItems === "start"
         ? "mr-auto ml-0"
-        : effectiveDistribution === "end"
+        : layout?.alignItems === "end"
         ? "ml-auto mr-0"
-        : "mx-auto";
+        : "mx-auto"
+      : effectiveDistribution === "start"
+      ? "mr-auto ml-0"
+      : effectiveDistribution === "end"
+      ? "ml-auto mr-0"
+      : "mx-auto";
 
     const innerY = innerYClasses[layout?.paddingInner || "normal"];
-    const padX = padXClasses[layout?.paddingX || "normal"];
+    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
     const effectiveGap = gapClasses[layout?.gap || "normal"];
     const effectiveNavGap = navGapClasses[layout?.gap || "normal"];
     const effectiveAlign = alignClasses[layout?.alignItems || "center"];
     const effectiveContentWidth =
       contentWidthClasses[layout?.contentMaxWidth || "full"];
     const isReverse = Boolean(layout?.reverse);
+
+    const getDirectionClass = () => {
+      if (direction === "col") {
+        return isReverse ? "flex-col-reverse" : "flex-col";
+      }
+      if (direction === "responsive") {
+        return isReverse
+          ? "flex-col-reverse md:flex-row-reverse"
+          : "flex-col md:flex-row";
+      }
+      return isReverse ? "flex-row-reverse" : "flex-row";
+    };
 
     const getNormalizedHref = (rawUrl?: string) => {
       if (!rawUrl || rawUrl === "#") return "#";
@@ -262,18 +300,22 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
         (!isHidden("topEmail") && content.topEmail) ||
         (!isHidden("topNotice") && content.topNotice));
 
+    const isAutoWidth = layout?.componentWidth === "auto";
+
     return (
       <header
         className={cn(
-          "w-full transition-all relative z-40",
-          isFullWidth
+          "transition-all relative z-40",
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          isStretchY && "h-full flex-1 flex flex-col",
+          isEdgeToEdge
             ? "border-b border-white/10 rounded-none border-l-0 border-r-0 border-t-0"
             : cn("shadow-xl border border-white/10", getRadiusClass(radiusPreset)),
           getSurfaceClasses(surfaceStyle)
         )}
         style={{
           backgroundColor: styles.customSurface || undefined,
-          ...(styles.borderWidth && styles.borderWidth !== "0" && !isFullWidth
+          ...(styles.borderWidth && styles.borderWidth !== "0" && !isEdgeToEdge
             ? {
                 borderWidth: `${styles.borderWidth}px`,
                 borderColor: styles.borderColor || `${accentColor}40`,
@@ -286,7 +328,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
           <div
             className={cn(
               "w-full py-1.5 md:py-2 border-b border-white/10 bg-black/30 flex flex-wrap items-center justify-between gap-3 text-[10px] md:text-[11px] font-bold tracking-wider",
-              padX
+              innerPadX
             )}
           >
             <div className="flex flex-wrap items-center gap-4 md:gap-6">
@@ -340,14 +382,16 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
         {/* Barra Principal de Navegação */}
         <div
           className={cn(
-            "w-full flex items-center justify-between transition-all",
+            "w-full flex transition-all",
+            isStretchY && "h-full flex-1",
             effectiveContentWidth,
             contentBoxPositionClass,
             justifyClass,
             effectiveAlign,
+            getDirectionClass(),
             effectiveGap,
             innerY,
-            padX
+            innerPadX
           )}
         >
           {/* Logo / Nome da Marca */}

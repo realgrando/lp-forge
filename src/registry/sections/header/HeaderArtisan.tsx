@@ -135,7 +135,9 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
   },
   Component: ({ content, layout, styles, theme }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const isFullWidth = (layout?.containerWidth || "full") === "full";
+    const isEdgeToEdge =
+      (layout?.containerWidth || "full") === "full" &&
+      (layout?.componentWidth || "full") === "full";
     const surfaceStyle = styles.surfaceVariant || theme.tokens.surfaceStyle;
     const radiusPreset = styles.borderRadius || theme.tokens.borderRadius;
     const accentColor = styles.customAccent || theme.palette.accent;
@@ -155,7 +157,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       spacious: "py-6 md:py-8 min-h-[84px] md:min-h-[120px]",
     };
 
-    const padXClasses: Record<string, string> = {
+    const innerPadXClasses: Record<string, string> = {
       none: "px-0",
       compact: "px-4 sm:px-6",
       normal: "px-6 lg:px-12",
@@ -163,7 +165,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
     };
 
     const innerY = innerYClasses[layout?.paddingInner || "normal"];
-    const padX = padXClasses[layout?.paddingX || "normal"];
+    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
 
     const getNormalizedHref = (rawUrl?: string) => {
       if (!rawUrl || rawUrl === "#") return "#";
@@ -180,18 +182,21 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       return trimmed;
     };
 
+    const isAutoWidth = layout?.componentWidth === "auto";
+
     return (
       <header
         className={cn(
-          "w-full transition-all relative z-40",
-          isFullWidth
+          "transition-all relative z-40",
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          isEdgeToEdge
             ? "border-b border-white/10 rounded-none border-l-0 border-r-0 border-t-0"
             : cn("shadow-xl border border-white/10", getRadiusClass(radiusPreset)),
           getSurfaceClasses(surfaceStyle)
         )}
         style={{
           backgroundColor: styles.customSurface || undefined,
-          ...(styles.borderWidth && styles.borderWidth !== "0" && !isFullWidth
+          ...(styles.borderWidth && styles.borderWidth !== "0" && !isEdgeToEdge
             ? {
                 borderWidth: `${styles.borderWidth}px`,
                 borderColor: styles.borderColor || `${accentColor}40`,
@@ -200,7 +205,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
         }}
       >
         {/* BARRA DESKTOP: Layout Editorial em 2 Níveis */}
-        <div className={cn("hidden md:flex flex-col items-center gap-4 text-center", innerY, padX)}>
+        <div className={cn("hidden md:flex flex-col items-center gap-4 text-center", innerY, innerPadX)}>
           {/* Nível 1: Subtítulo Editorial + Marca Central */}
           <div className="flex flex-col items-center gap-1.5">
             {!isHidden("brandSubtitle") && content.brandSubtitle && (
@@ -287,7 +292,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
         </div>
 
         {/* BARRA MOBILE: Compacta com Marca à Esquerda e Hamburguer à Direita */}
-        <div className={cn("md:hidden flex items-center justify-between py-3", padX)}>
+        <div className={cn("md:hidden flex items-center justify-between py-3", innerPadX)}>
           {!isHidden("brandName") && (
             <a href="#" className="flex items-center gap-2 min-w-0">
               <div className="flex items-baseline truncate">

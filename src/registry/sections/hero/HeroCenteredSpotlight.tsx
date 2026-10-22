@@ -207,6 +207,12 @@ export const HeroCenteredSpotlightSection = createSection<HeroCenteredContent>({
       ? "items-end text-right"
       : "items-center text-center";
 
+    const boxPositionClass = isStart
+      ? "mr-auto ml-0"
+      : isEnd
+      ? "ml-auto mr-0"
+      : "mx-auto";
+
     const metricsToRender = isReverse
       ? [...content.metricsBar].reverse()
       : content.metricsBar;
@@ -214,7 +220,8 @@ export const HeroCenteredSpotlightSection = createSection<HeroCenteredContent>({
     return (
       <div
         className={cn(
-          "w-full max-w-4xl mx-auto flex transition-all",
+          "w-full max-w-4xl flex transition-all",
+          boxPositionClass,
           alignmentClass,
           getDirectionClass(),
           effectiveGap
