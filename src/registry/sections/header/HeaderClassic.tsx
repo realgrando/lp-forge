@@ -74,21 +74,11 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       optionalKey: "brand",
     },
     {
-      key: "justify",
-      label: "Alinhamento Horizontal",
-      type: "select",
-      optionalKey: "navLinks",
-      options: [
-        { value: "between", label: "Extremidades (Between)" },
-        { value: "center", label: "Centralizado (Center)" },
-        { value: "start", label: "Alinhado à Esquerda (Start)" },
-      ],
-    },
-    {
       key: "navLinks",
       label: "Links de Navegação",
       type: "array",
       optionalKey: "navLinks",
+      typographyElementKey: "navLinks",
       defaultNewItem: { label: "Nova Seção", url: "#secao" },
       itemFields: [
         { key: "label", label: "Texto do Link", type: "text" },
@@ -100,6 +90,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       label: "Botão de Chamada (CTA)",
       type: "button",
       optionalKey: "ctaButton",
+      typographyElementKey: "ctaButton",
     },
   ],
   defaultData: {
@@ -329,7 +320,8 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       ? "py-1.5 md:py-2 min-h-[46px] md:min-h-[54px]"
       : baseInnerY;
     const effectiveGap = gapClasses[layout?.gap || "normal"];
-    const effectiveNavGap = navGapClasses[layout?.gap || "normal"];
+    const effectiveNavGap = navGapClasses[layout?.navGap || layout?.gap || "normal"];
+    const navTypography = styles?.typographyOverrides?.["navLinks"];
     const effectiveAlign = alignClasses[layout?.alignItems || "center"];
     const effectiveContentWidth =
       contentWidthClasses[layout?.contentMaxWidth || "full"];
@@ -453,18 +445,36 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
                 isReverse && "flex-row-reverse"
               )}
             >
-              {content.navLinks.map((item, idx) => (
-                <a
-                  key={idx}
-                  href={getNormalizedHref(item.url)}
-                  className={cn(
-                    "font-medium tracking-wide opacity-80 hover:opacity-100 transition-opacity hover:text-[#FFBE2E] whitespace-nowrap",
-                    isNarrowWidth ? "text-[11px] lg:text-[12px]" : "text-[12px]"
-                  )}
-                >
-                  {item.label}
-                </a>
-              ))}
+              {content.navLinks.map((item, idx) => {
+                const hoverStyle = layout?.navHoverStyle || "color";
+                const isPill = hoverStyle === "pill";
+                const isUnderline = hoverStyle === "underline";
+                const isGlow = hoverStyle === "glow";
+
+                return (
+                  <a
+                    key={idx}
+                    href={getNormalizedHref(item.url)}
+                    style={{
+                      fontFamily: navTypography?.fontFamily || undefined,
+                      color: navTypography?.color || undefined,
+                    }}
+                    className={cn(
+                      "font-medium tracking-wide transition-all whitespace-nowrap",
+                      navTypography?.fontSize || (isNarrowWidth ? "text-[11px] lg:text-[12px]" : "text-[12px]"),
+                      navTypography?.fontWeight || "font-medium",
+                      navTypography?.textTransform || "normal-case",
+                      navTypography?.letterSpacing,
+                      isPill && "px-3 py-1.5 rounded-lg opacity-80 hover:opacity-100 hover:bg-white/10 hover:text-white",
+                      isUnderline && "relative py-1 opacity-80 hover:opacity-100 hover:text-white after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 hover:after:w-full after:h-[2px] after:bg-[#F4B400] after:transition-all",
+                      isGlow && "opacity-80 hover:opacity-100 hover:text-white hover:drop-shadow-[0_0_8px_rgba(244,180,0,0.8)]",
+                      (!isPill && !isUnderline && !isGlow) && "opacity-80 hover:opacity-100 hover:text-[#F4B400]"
+                    )}
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
             </nav>
           )}
 

@@ -78,11 +78,12 @@ export const SmartButton: React.FC<SmartButtonProps> = ({
   const size = button.size || "md";
   const variant = button.variant || "solid";
   const iconPos = button.iconPosition || "right";
+  const override = elementKey ? styles?.typographyOverrides?.[elementKey] : undefined;
 
   // Cálculo de cores e estilos baseados na variante + overrides micro do botão
   const getVariantStyle = (): React.CSSProperties => {
     const customBg = button.customBg || defaultBg;
-    const customText = button.customText || defaultText;
+    const customText = override?.color || button.customText || defaultText;
     const customBorder = button.customBorderColor;
     const baseColor = customBg || accentColor;
 
@@ -155,12 +156,19 @@ export const SmartButton: React.FC<SmartButtonProps> = ({
   return (
     <a
       href={finalHref}
-      style={getVariantStyle()}
+      style={{
+        ...getVariantStyle(),
+        fontFamily: override?.fontFamily || undefined,
+      }}
       className={cn(
         "inline-flex items-center justify-center font-bold transition-all duration-200 border text-center select-none",
         SIZE_CLASSES[size],
         getRadiusClass(radius),
         button.fullWidth && "w-full",
+        override?.fontWeight,
+        override?.fontSize,
+        override?.textTransform,
+        override?.letterSpacing,
         variant === "solid" && "shadow-lg hover:opacity-95 hover:-translate-y-0.5",
         variant === "3d" && "hover:-translate-y-0.5 active:translate-y-0.5",
         variant === "outline" && "hover:bg-white/5",

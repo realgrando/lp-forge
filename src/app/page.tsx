@@ -13,7 +13,9 @@ import {
   GOOGLE_FONTS_CATALOG,
 } from "@/config/presets";
 import { ICON_OPTIONS } from "@/components/engine/DynamicIcon";
-import { ButtonFieldEditor } from "@/components/studio/ButtonFieldEditor";
+import { ButtonContentEditor } from "@/components/studio/ButtonContentEditor";
+import { ButtonDesignEditor } from "@/components/studio/ButtonDesignEditor";
+import { InlineTypographyEditor } from "@/components/studio/ui/InlineTypographyEditor";
 import { ArrayFieldEditor } from "@/components/studio/ArrayFieldEditor";
 import { SortableLayerList } from "@/components/studio/SortableLayerList";
 import { ThemeGlobalDrawer } from "@/components/studio/ThemeGlobalDrawer";
@@ -155,7 +157,7 @@ export default function StudioPage() {
   >("layers");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [rightTab, setRightTab] = useState<"content" | "style" | "typography">(
+  const [rightTab, setRightTab] = useState<"content" | "style">(
     "content"
   );
   const [openDesignAccordion, setOpenDesignAccordion] = useState<string | null>(null);
@@ -954,28 +956,23 @@ export default function StudioPage() {
                   </div>
                 </div>
 
-                {/* Abas das 3 Camadas */}
+                {/* Abas das Camadas: Conteúdo & Tipografia vs Design */}
                 <div className="mt-3">
-                  <SegmentedControl<"content" | "style" | "typography">
+                  <SegmentedControl<"content" | "style">
                     value={rightTab}
                     onChange={setRightTab}
-                    columns={3}
+                    columns={2}
                     size="sm"
                     options={[
                       {
                         value: "content",
-                        label: "Conteúdo",
+                        label: "Conteúdo & Textos",
                         icon: <Sparkles className="w-3.5 h-3.5" />,
                       },
                       {
                         value: "style",
                         label: "Design",
                         icon: <Sliders className="w-3.5 h-3.5" />,
-                      },
-                      {
-                        value: "typography",
-                        label: "Tipografia",
-                        icon: <Type className="w-3.5 h-3.5" />,
                       },
                     ]}
                   />
@@ -1128,7 +1125,7 @@ export default function StudioPage() {
                                   <div
                                     key={field.key}
                                     className={cn(
-                                      "space-y-1.5 p-3 rounded-xl border transition-all",
+                                      "space-y-2.5 p-3.5 rounded-xl border transition-all",
                                       !isElementHidden
                                         ? "bg-zinc-950/70 border-white/10"
                                         : "bg-zinc-950/30 border-white/5 opacity-50"
@@ -1169,18 +1166,55 @@ export default function StudioPage() {
                                     </div>
 
                                     {!isElementHidden && (
-                                      <input
-                                        type="text"
-                                        value={val || ""}
-                                        onChange={(e) =>
-                                          updateSectionContent(
-                                            selectedSection.id,
-                                            field.key,
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/90 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
-                                      />
+                                      <>
+                                        <input
+                                          type="text"
+                                          value={val || ""}
+                                          onChange={(e) =>
+                                            updateSectionContent(
+                                              selectedSection.id,
+                                              field.key,
+                                              e.target.value
+                                            )
+                                          }
+                                          className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/90 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
+                                        />
+
+                                        {field.typographyElementKey && (
+                                          <InlineTypographyEditor
+                                            elementKey={field.typographyElementKey}
+                                            label={`Tipografia (${field.label})`}
+                                            override={
+                                              selectedSection.styles
+                                                .typographyOverrides?.[
+                                                field.typographyElementKey
+                                              ]
+                                            }
+                                            onChange={(patch) =>
+                                              updateTypographyOverride(
+                                                selectedSection.id,
+                                                field.typographyElementKey!,
+                                                patch
+                                              )
+                                            }
+                                            onReset={() =>
+                                              updateTypographyOverride(
+                                                selectedSection.id,
+                                                field.typographyElementKey!,
+                                                {
+                                                  fontFamily: undefined,
+                                                  fontSize: undefined,
+                                                  fontWeight: undefined,
+                                                  textTransform: undefined,
+                                                  letterSpacing: undefined,
+                                                  color: undefined,
+                                                }
+                                              )
+                                            }
+                                            defaultAccentColor={effectiveAccentColor}
+                                          />
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 );
@@ -1192,7 +1226,7 @@ export default function StudioPage() {
                                   <div
                                     key={field.key}
                                     className={cn(
-                                      "space-y-1.5 p-3 rounded-xl border transition-all",
+                                      "space-y-2.5 p-3.5 rounded-xl border transition-all",
                                       !isElementHidden
                                         ? "bg-zinc-950/70 border-white/10"
                                         : "bg-zinc-950/30 border-white/5 opacity-50"
@@ -1233,18 +1267,55 @@ export default function StudioPage() {
                                     </div>
 
                                     {!isElementHidden && (
-                                      <textarea
-                                        rows={3}
-                                        value={val || ""}
-                                        onChange={(e) =>
-                                          updateSectionContent(
-                                            selectedSection.id,
-                                            field.key,
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/90 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
-                                      />
+                                      <>
+                                        <textarea
+                                          rows={3}
+                                          value={val || ""}
+                                          onChange={(e) =>
+                                            updateSectionContent(
+                                              selectedSection.id,
+                                              field.key,
+                                              e.target.value
+                                            )
+                                          }
+                                          className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/90 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
+                                        />
+
+                                        {field.typographyElementKey && (
+                                          <InlineTypographyEditor
+                                            elementKey={field.typographyElementKey}
+                                            label={`Tipografia (${field.label})`}
+                                            override={
+                                              selectedSection.styles
+                                                .typographyOverrides?.[
+                                                field.typographyElementKey
+                                              ]
+                                            }
+                                            onChange={(patch) =>
+                                              updateTypographyOverride(
+                                                selectedSection.id,
+                                                field.typographyElementKey!,
+                                                patch
+                                              )
+                                            }
+                                            onReset={() =>
+                                              updateTypographyOverride(
+                                                selectedSection.id,
+                                                field.typographyElementKey!,
+                                                {
+                                                  fontFamily: undefined,
+                                                  fontSize: undefined,
+                                                  fontWeight: undefined,
+                                                  textTransform: undefined,
+                                                  letterSpacing: undefined,
+                                                  color: undefined,
+                                                }
+                                              )
+                                            }
+                                            defaultAccentColor={effectiveAccentColor}
+                                          />
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 );
@@ -1277,8 +1348,8 @@ export default function StudioPage() {
                       {/* 3. Ações & Botões (CTAs) */}
                       {buttonFields.length > 0 && (
                         <AccordionSection
-                          title="Ações & Botões (CTAs)"
-                          subtitle="Links de conversão, estilo e ícones"
+                          title="Botões & Chamadas (CTAs)"
+                          subtitle="Textos, links e tipografia dos botões"
                           icon={Sparkles}
                           badge={buttonFields.length}
                           defaultOpen={true}
@@ -1287,14 +1358,18 @@ export default function StudioPage() {
                             {buttonFields.map((field) => {
                               const val = selectedSection.content[field.key];
                               const optKey = field.optionalKey || field.key;
+                              const typoKey = field.typographyElementKey || field.key;
                               const isElementHidden = Boolean(
                                 selectedSection.styles.hiddenElements?.[optKey]
                               );
                               return (
-                                <ButtonFieldEditor
+                                <ButtonContentEditor
                                   key={field.key}
                                   label={field.label}
                                   value={val}
+                                  typographyOverride={
+                                    selectedSection.styles.typographyOverrides?.[typoKey]
+                                  }
                                   isHiddenBySection={isElementHidden}
                                   onToggleSectionVisibility={() =>
                                     toggleElementVisibility(
@@ -1307,6 +1382,27 @@ export default function StudioPage() {
                                       selectedSection.id,
                                       field.key,
                                       nextBtn
+                                    )
+                                  }
+                                  onTypographyChange={(patch) =>
+                                    updateTypographyOverride(
+                                      selectedSection.id,
+                                      typoKey,
+                                      patch
+                                    )
+                                  }
+                                  onTypographyReset={() =>
+                                    updateTypographyOverride(
+                                      selectedSection.id,
+                                      typoKey,
+                                      {
+                                        fontFamily: undefined,
+                                        fontSize: undefined,
+                                        fontWeight: undefined,
+                                        textTransform: undefined,
+                                        letterSpacing: undefined,
+                                        color: undefined,
+                                      }
                                     )
                                   }
                                   defaultAccentColor={effectiveAccentColor}
@@ -1326,7 +1422,7 @@ export default function StudioPage() {
                           badge={arrayFields.length}
                           defaultOpen={true}
                         >
-                          <div className="space-y-3">
+                          <div className="space-y-4">
                             {arrayFields.map((field) => {
                               const val = selectedSection.content[field.key];
                               const optKey = field.optionalKey || field.key;
@@ -1334,26 +1430,62 @@ export default function StudioPage() {
                                 selectedSection.styles.hiddenElements?.[optKey]
                               );
                               return (
-                                <ArrayFieldEditor
-                                  key={field.key}
-                                  field={field}
-                                  items={val || []}
-                                  isHidden={isElementHidden}
-                                  onToggleVisibility={() =>
-                                    toggleElementVisibility(
-                                      selectedSection.id,
-                                      optKey
-                                    )
-                                  }
-                                  onChange={(nextItems) =>
-                                    updateSectionContent(
-                                      selectedSection.id,
-                                      field.key,
-                                      nextItems
-                                    )
-                                  }
-                                  defaultAccentColor={effectiveAccentColor}
-                                />
+                                <div key={field.key} className="space-y-2">
+                                  <ArrayFieldEditor
+                                    field={field}
+                                    items={val || []}
+                                    isHidden={isElementHidden}
+                                    onToggleVisibility={() =>
+                                      toggleElementVisibility(
+                                        selectedSection.id,
+                                        optKey
+                                      )
+                                    }
+                                    onChange={(nextItems) =>
+                                      updateSectionContent(
+                                        selectedSection.id,
+                                        field.key,
+                                        nextItems
+                                      )
+                                    }
+                                    defaultAccentColor={effectiveAccentColor}
+                                  />
+
+                                  {field.typographyElementKey && !isElementHidden && (
+                                    <InlineTypographyEditor
+                                      elementKey={field.typographyElementKey}
+                                      label={`Tipografia dos Itens (${field.label})`}
+                                      override={
+                                        selectedSection.styles
+                                          .typographyOverrides?.[
+                                          field.typographyElementKey
+                                        ]
+                                      }
+                                      onChange={(patch) =>
+                                        updateTypographyOverride(
+                                          selectedSection.id,
+                                          field.typographyElementKey!,
+                                          patch
+                                        )
+                                      }
+                                      onReset={() =>
+                                        updateTypographyOverride(
+                                          selectedSection.id,
+                                          field.typographyElementKey!,
+                                          {
+                                            fontFamily: undefined,
+                                            fontSize: undefined,
+                                            fontWeight: undefined,
+                                            textTransform: undefined,
+                                            letterSpacing: undefined,
+                                            color: undefined,
+                                          }
+                                        )
+                                      }
+                                      defaultAccentColor={effectiveAccentColor}
+                                    />
+                                  )}
+                                </div>
                               );
                             })}
                           </div>
@@ -2719,6 +2851,110 @@ export default function StudioPage() {
                                   ]}
                                 />
                               </div>
+
+                              {/* 4. Design dos Botões / CTAs (Detecção Dinâmica de Botões) */}
+                              {selectedDefinition.fields
+                                .filter((f) => f.type === "button")
+                                .map((field) => {
+                                  const btnVal = selectedSection.content[field.key];
+                                  return (
+                                    <div key={field.key} className="pt-2 border-t border-white/5">
+                                      <ButtonDesignEditor
+                                        label={field.label}
+                                        value={btnVal}
+                                        onChange={(nextBtn) =>
+                                          updateSectionContent(
+                                            selectedSection.id,
+                                            field.key,
+                                            nextBtn
+                                          )
+                                        }
+                                        defaultAccentColor={effectiveAccentColor}
+                                      />
+                                    </div>
+                                  );
+                                })}
+
+                              {/* 5. Design dos Links de Navegação (Menu) */}
+                              {Boolean(selectedSection.content?.navLinks) && (
+                                <div className="pt-2 border-t border-white/5 space-y-3.5">
+                                  <div className="rounded-xl border border-white/10 bg-zinc-950/60 p-4 space-y-4">
+                                    <div className="flex items-center gap-2 border-b border-white/5 pb-2.5">
+                                      <div className="w-6 h-6 rounded-lg bg-[#F4B400]/10 border border-[#F4B400]/20 flex items-center justify-center text-[#F4B400]">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                      </div>
+                                      <div>
+                                        <span className="text-xs font-bold text-zinc-100 block">
+                                          Design dos Links de Navegação
+                                        </span>
+                                        <span className="text-[10px] text-zinc-400 block">
+                                          Efeito ao passar o mouse e espaçamento dos links
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Efeito Hover */}
+                                    <div className="space-y-1.5">
+                                      <label className="text-xs font-semibold text-zinc-300 block">
+                                        Efeito ao Passar o Mouse (Hover)
+                                      </label>
+                                      <SegmentedControl<"color" | "underline" | "pill" | "glow">
+                                        value={selectedSection.layout.navHoverStyle || "color"}
+                                        onChange={(style) =>
+                                          updateSectionLayout(selectedSection.id, {
+                                            navHoverStyle: style,
+                                          })
+                                        }
+                                        columns={4}
+                                        size="sm"
+                                        options={[
+                                          { value: "color", label: "Cor" },
+                                          { value: "underline", label: "Linha" },
+                                          { value: "pill", label: "Pílula" },
+                                          { value: "glow", label: "Glow" },
+                                        ]}
+                                      />
+                                      <span className="text-[10px] text-zinc-500 block">
+                                        {selectedSection.layout.navHoverStyle === "pill"
+                                          ? "Cápsula translúcida suave ao redor do link."
+                                          : selectedSection.layout.navHoverStyle === "underline"
+                                          ? "Sublinhado animado na cor de destaque."
+                                          : selectedSection.layout.navHoverStyle === "glow"
+                                          ? "Brilho luminoso em néon dourado."
+                                          : "Transição suave de cor para a cor de destaque."}
+                                      </span>
+                                    </div>
+
+                                    {/* Espaçamento entre Links */}
+                                    <div className="space-y-1.5">
+                                      <label className="text-xs font-semibold text-zinc-300 block">
+                                        Espaçamento entre os Links (Nav Gap)
+                                      </label>
+                                      <SegmentedControl<LayoutGap>
+                                        value={
+                                          selectedSection.layout.navGap ||
+                                          selectedSection.layout.gap ||
+                                          "normal"
+                                        }
+                                        onChange={(ng) =>
+                                          updateSectionLayout(selectedSection.id, {
+                                            navGap: ng,
+                                          })
+                                        }
+                                        columns={5}
+                                        size="sm"
+                                        options={[
+                                          { value: "none", label: "0" },
+                                          { value: "compact", label: "SM" },
+                                          { value: "normal", label: "MD" },
+                                          { value: "spacious", label: "LG" },
+                                          { value: "monumental", label: "XL" },
+                                        ]}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
@@ -3117,393 +3353,6 @@ export default function StudioPage() {
                   );
                 })()}
 
-                {/* ABA 3: TIPOGRAFIA, COR E ÍCONE POR ELEMENTO (Micro Camada) */}
-                {rightTab === "typography" && (
-                  <div className="space-y-3.5">
-                    {selectedDefinition.fields
-                      .filter((f) => Boolean(f.typographyElementKey))
-                      .map((field, idx) => {
-                        const elKey = field.typographyElementKey!;
-                        const currentOverride =
-                          selectedSection.styles.typographyOverrides?.[elKey] ||
-                          {};
-
-                        const hasCustomSettings = Boolean(
-                          currentOverride.fontFamily ||
-                            currentOverride.fontSize ||
-                            currentOverride.fontWeight ||
-                            currentOverride.color ||
-                            currentOverride.bgColor ||
-                            currentOverride.textTransform ||
-                            currentOverride.iconName
-                        );
-
-                        return (
-                          <AccordionSection
-                            key={elKey}
-                            title={field.label}
-                            subtitle={
-                              currentOverride.fontFamily
-                                ? `Fonte: ${currentOverride.fontFamily}`
-                                : "Herda fontes e estilos do tema"
-                            }
-                            icon={Type}
-                            badge={hasCustomSettings ? "Personalizado" : undefined}
-                            defaultOpen={idx === 0}
-                            headerAction={
-                              hasCustomSettings ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateTypographyOverride(
-                                      selectedSection.id,
-                                      elKey,
-                                      {
-                                        fontFamily: undefined,
-                                        fontSize: undefined,
-                                        fontWeight: undefined,
-                                        textTransform: undefined,
-                                        color: undefined,
-                                        bgColor: undefined,
-                                        borderColor: undefined,
-                                        iconName: undefined,
-                                      }
-                                    );
-                                  }}
-                                  className="text-[11px] text-[#F4B400] hover:underline font-semibold"
-                                  title="Restaurar padrão do tema"
-                                >
-                                  Restaurar
-                                </button>
-                              ) : null
-                            }
-                          >
-                            <div className="space-y-3.5">
-                              {/* Seletor de Fonte Google */}
-                              <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-zinc-300 block">
-                                  Família da Fonte
-                                </label>
-                                <select
-                                  value={currentOverride.fontFamily || ""}
-                                  onChange={(e) =>
-                                    updateTypographyOverride(
-                                      selectedSection.id,
-                                      elKey,
-                                      {
-                                        fontFamily: e.target.value || undefined,
-                                      }
-                                    )
-                                  }
-                                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
-                                >
-                                  <option value="">Herdar do Tema Global</option>
-                                  {GOOGLE_FONTS_CATALOG.map((font) => (
-                                    <option key={font.value} value={font.value}>
-                                      {font.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              {/* Escala de Tamanho & Peso */}
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                  <label className="text-xs font-semibold text-zinc-300 block">
-                                    Tamanho
-                                  </label>
-                                  <select
-                                    value={currentOverride.fontSize || ""}
-                                    onChange={(e) =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        {
-                                          fontSize: e.target.value || undefined,
-                                        }
-                                      )
-                                    }
-                                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
-                                  >
-                                    <option value="">Padrão da Seção</option>
-                                    {FONT_SIZE_GROUPS.map((grp) => (
-                                      <optgroup
-                                        key={grp.group}
-                                        label={grp.group}
-                                        className="bg-zinc-900 font-semibold text-zinc-400"
-                                      >
-                                        {grp.options.map((sz) => (
-                                          <option
-                                            key={sz.value}
-                                            value={sz.value}
-                                            className="bg-zinc-950 text-white font-normal"
-                                          >
-                                            {sz.label}
-                                          </option>
-                                        ))}
-                                      </optgroup>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                  <label className="text-xs font-semibold text-zinc-300 block">
-                                    Peso (Weight)
-                                  </label>
-                                  <select
-                                    value={currentOverride.fontWeight || ""}
-                                    onChange={(e) =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        {
-                                          fontWeight:
-                                            (e.target.value as any) || undefined,
-                                        }
-                                      )
-                                    }
-                                    className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
-                                  >
-                                    <option value="">Padrão da Seção</option>
-                                    <option value="font-light">Fina (300)</option>
-                                    <option value="font-normal">Normal (400)</option>
-                                    <option value="font-medium">Média (500)</option>
-                                    <option value="font-semibold">Semi-Negrito (600)</option>
-                                    <option value="font-bold">Negrito (700)</option>
-                                    <option value="font-extrabold">ExtraBold (800)</option>
-                                    <option value="font-black">Black (900)</option>
-                                  </select>
-                                </div>
-                              </div>
-
-                              {/* Largura Máxima deste Texto */}
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-xs font-semibold text-zinc-300 block">
-                                    Largura Máxima (Quebra de Linha)
-                                  </label>
-                                  <span className="text-[10px] text-zinc-500">
-                                    Limite de expansão horizontal
-                                  </span>
-                                </div>
-                                <SegmentedControl<"default" | TextMaxWidth>
-                                  value={currentOverride.maxWidth || "default"}
-                                  onChange={(val) =>
-                                    updateTypographyOverride(
-                                      selectedSection.id,
-                                      elKey,
-                                      {
-                                        maxWidth:
-                                          val === "default" ? undefined : val,
-                                      }
-                                    )
-                                  }
-                                  columns={5}
-                                  size="sm"
-                                  options={[
-                                    { value: "default", label: "Padrão" },
-                                    { value: "narrow", label: "Curto" },
-                                    { value: "medium", label: "Médio" },
-                                    { value: "wide", label: "Amplo" },
-                                    { value: "full", label: "Total" },
-                                  ]}
-                                />
-                              </div>
-
-                              {/* Cores de Texto e Badge */}
-                              <ColorFieldRow
-                                label="Cor do Texto"
-                                description="Contraste e leitura deste elemento"
-                                value={currentOverride.color}
-                                defaultValue={effectiveAccentColor}
-                                onChange={(hex) =>
-                                  updateTypographyOverride(
-                                    selectedSection.id,
-                                    elKey,
-                                    { color: hex }
-                                  )
-                                }
-                                onReset={() =>
-                                  updateTypographyOverride(
-                                    selectedSection.id,
-                                    elKey,
-                                    { color: undefined }
-                                  )
-                                }
-                              />
-
-                              {field.isBadge && (
-                                <>
-                                  <ColorFieldRow
-                                    label="Fundo da Badge"
-                                    description="Cor de background da pílula"
-                                    value={currentOverride.bgColor}
-                                    defaultValue={
-                                      effectiveAccentColor.startsWith("#")
-                                        ? `${effectiveAccentColor.slice(0, 7)}24`
-                                        : "#F4B40024"
-                                    }
-                                    onChange={(hex) =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        { bgColor: hex }
-                                      )
-                                    }
-                                    onReset={() =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        { bgColor: undefined }
-                                      )
-                                    }
-                                  />
-
-                                  <ColorFieldRow
-                                    label="Borda da Badge"
-                                    description="Contorno sutil da pílula"
-                                    value={currentOverride.borderColor}
-                                    defaultValue={
-                                      effectiveAccentColor.startsWith("#")
-                                        ? `${effectiveAccentColor.slice(0, 7)}59`
-                                        : "#F4B40059"
-                                    }
-                                    onChange={(hex) =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        { borderColor: hex }
-                                      )
-                                    }
-                                    onReset={() =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        { borderColor: undefined }
-                                      )
-                                    }
-                                  />
-
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-zinc-300 block">
-                                      Ícone da Badge
-                                    </label>
-                                    <select
-                                      value={currentOverride.iconName || "Sparkles"}
-                                      onChange={(e) =>
-                                        updateTypographyOverride(
-                                          selectedSection.id,
-                                          elKey,
-                                          {
-                                            iconName: e.target.value,
-                                          }
-                                        )
-                                      }
-                                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-xs text-white focus:border-[#F4B400] focus:outline-none transition-colors"
-                                    >
-                                      {ICON_OPTIONS.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                          {opt.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                </>
-                              )}
-
-                              {/* Transformação de Caixa */}
-                              <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-zinc-300 block">
-                                  Caixa de Texto
-                                </label>
-                                <SegmentedControl<"capitalize" | "uppercase" | "lowercase" | "normal-case">
-                                  value={
-                                    currentOverride.textTransform ||
-                                    (field.isBadge ? "uppercase" : "normal-case")
-                                  }
-                                  onChange={(tr) =>
-                                    updateTypographyOverride(
-                                      selectedSection.id,
-                                      elKey,
-                                      {
-                                        textTransform: tr,
-                                      }
-                                    )
-                                  }
-                                  columns={4}
-                                  size="sm"
-                                  options={[
-                                    { value: "capitalize", label: "Camel" },
-                                    { value: "uppercase", label: "ALTA" },
-                                    { value: "lowercase", label: "baixa" },
-                                    { value: "normal-case", label: "Custom" },
-                                  ]}
-                                />
-                              </div>
-
-                              {/* Destaque de Palavras (Highlights) */}
-                              <div className="pt-3 border-t border-white/5 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                                    <Sparkles className="w-3.5 h-3.5 text-[#F4B400]" />
-                                    Destaque de Palavras (Highlights)
-                                  </label>
-                                </div>
-                                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                                  Envolva trechos com <code className="text-[#F4B400] bg-black/40 px-1 py-0.5 rounded border border-white/10 font-mono text-[10px]">**palavra**</code> no texto para aplicar efeito visual especial.
-                                </p>
-
-                                <div className="space-y-1.5">
-                                  <span className="text-[11px] text-zinc-400 font-medium">Estilo do Destaque</span>
-                                  <SegmentedControl<TextHighlightStyle>
-                                    value={currentOverride.highlightStyle || "accent"}
-                                    onChange={(style) =>
-                                      updateTypographyOverride(
-                                        selectedSection.id,
-                                        elKey,
-                                        { highlightStyle: style }
-                                      )
-                                    }
-                                    columns={5}
-                                    size="sm"
-                                    options={[
-                                      { value: "accent", label: "Cor" },
-                                      { value: "gradient", label: "Degradê" },
-                                      { value: "glow", label: "Brilho" },
-                                      { value: "underline", label: "Sublinhado" },
-                                      { value: "marker", label: "Tarja" },
-                                    ]}
-                                  />
-                                </div>
-
-                                <ColorFieldRow
-                                  label="Cor do Destaque"
-                                  description="Cor personalizada para o efeito de destaque"
-                                  value={currentOverride.highlightColor}
-                                  defaultValue={effectiveAccentColor}
-                                  onChange={(hex) =>
-                                    updateTypographyOverride(
-                                      selectedSection.id,
-                                      elKey,
-                                      { highlightColor: hex }
-                                    )
-                                  }
-                                  onReset={() =>
-                                    updateTypographyOverride(
-                                      selectedSection.id,
-                                      elKey,
-                                      { highlightColor: undefined }
-                                    )
-                                  }
-                                />
-                              </div>
-                            </div>
-                          </AccordionSection>
-                        );
-                      })}
-                  </div>
-                )}
               </div>
             </>
           )}

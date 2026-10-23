@@ -145,6 +145,8 @@ export interface SectionLayout {
   distribution?: LayoutDistribution; // start, center, end, between, around
   alignItems?: LayoutAlignItems;     // start, center, end, stretch
   gap?: LayoutGap;                   // none, compact, normal, spacious, monumental
+  navHoverStyle?: "color" | "underline" | "pill" | "glow"; // Estilo de hover dos links de navegação
+  navGap?: LayoutGap;                // Espaçamento entre links de navegação
 
   // Legado / compatibilidade
   contentMaxWidth?: ContentMaxWidth;
