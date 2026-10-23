@@ -10,10 +10,14 @@ import { DynamicIcon } from "@/components/engine/DynamicIcon";
 import {
   buttonConfigSchema,
   ContentMaxWidth,
+  HeaderSurfaceType,
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
+import { useStudioStore } from "@/store/useStudioStore";
+import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 
 const headerEnterpriseSchema = z.object({
   topPhone: z.string(),
@@ -117,11 +121,22 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
   ],
   defaultData: {
     layout: {
-      paddingY: "none",
-      paddingInner: "normal",
-      paddingX: "normal",
       containerWidth: "full",
+      containerAlignX: "center",
+      containerAlignY: "center",
+      minHeight: "auto",
+      paddingY: "none",
+      paddingX: "none",
       sticky: true,
+      componentWidth: "full",
+      direction: "row",
+      reverse: false,
+      paddingInner: "normal",
+      paddingInnerX: "spacious",
+      distribution: "between",
+      alignItems: "center",
+      gap: "normal",
+      contentMaxWidth: "full",
     },
     styles: {
       surfaceVariant: "glass",
@@ -148,7 +163,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
         url: "#contato",
         variant: "solid",
         size: "sm",
-        radius: "full",
+        radius: "sm",
         iconName: "ShieldCheck",
         iconPosition: "left",
       },
@@ -170,6 +185,31 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
     const hasCta =
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
     const hasMobileMenu = hasNavLinks;
+
+    const viewport = useStudioStore((s) => s.viewport);
+    const isMobileLayout = layout?.containerWidth === "mobile" || viewport === "mobile";
+    const isNarrowWidth = layout?.containerWidth === "narrow" || layout?.componentWidth === "narrow";
+    const isBoxedWidth = layout?.containerWidth === "boxed" || layout?.componentWidth === "boxed";
+
+    // Resolução combinável de Comportamento de Rolagem
+    const scrollVisibility =
+      layout?.scrollVisibility ||
+      (layout?.headerScrollBehavior === "static" || layout?.sticky === false
+        ? "static"
+        : "fixed");
+    const scrollSurface =
+      layout?.scrollSurface ||
+      (layout?.headerScrollBehavior === "blur_on_scroll"
+        ? "transparent_to_glass"
+        : layout?.headerScrollBehavior === "solid_on_scroll"
+        ? "transparent_to_solid"
+        : "keep");
+    const scrollShape = layout?.scrollShape || "keep";
+
+    const { isScrolled, isVisible, isScrollingUp, currentScroll } = useHeaderScroll(
+      scrollVisibility,
+      layout?.sticky !== false
+    );
 
     const direction = layout?.direction || "row";
     const isCol = direction === "col";
@@ -197,28 +237,62 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
           spacious: "py-4 md:py-6 min-h-[76px] md:min-h-[96px]",
         };
 
-    const innerPadXClasses: Record<string, string> = {
-      none: "px-0",
-      compact: "px-3 sm:px-5",
-      normal: "px-5 sm:px-8",
-      spacious: "px-8 sm:px-14",
+    const getInnerPadXClass = () => {
+      const scale = layout?.paddingInnerX || (isMobileLayout ? "normal" : "spacious");
+      if (scale === "none") return "px-0";
+      if (isMobileLayout) {
+        if (scale === "compact") return "px-3 sm:px-4";
+        if (scale === "normal") return "px-6 sm:px-7";
+        return "px-10 sm:px-12";
+      }
+      if (isNarrowWidth) {
+        if (scale === "compact") return "px-4 sm:px-6";
+        if (scale === "normal") return "px-8 sm:px-10";
+        return "px-12 sm:px-16";
+      }
+      if (isBoxedWidth) {
+        if (scale === "compact") return "px-6 sm:px-8";
+        if (scale === "normal") return "px-10 sm:px-14";
+        return "px-16 sm:px-20 md:px-24";
+      }
+      if (scale === "compact") return "px-6 sm:px-10";
+      if (scale === "normal") return "px-12 sm:px-16 md:px-20";
+      return "px-16 sm:px-24 md:px-32 lg:px-36";
     };
 
-    const gapClasses: Record<LayoutGap, string> = {
-      none: "gap-1",
-      compact: "gap-4 sm:gap-6",
-      normal: "gap-6 sm:gap-8",
-      spacious: "gap-8 sm:gap-12",
-      monumental: "gap-12 sm:gap-16",
-    };
+    const innerPadX = getInnerPadXClass();
 
-    const navGapClasses: Record<LayoutGap, string> = {
-      none: "gap-2",
-      compact: "gap-4",
-      normal: "gap-7",
-      spacious: "gap-10",
-      monumental: "gap-14",
-    };
+    const gapClasses: Record<LayoutGap, string> = isNarrowWidth
+      ? {
+          none: "gap-1",
+          compact: "gap-2 sm:gap-3",
+          normal: "gap-4 sm:gap-6",
+          spacious: "gap-6 sm:gap-8",
+          monumental: "gap-8 sm:gap-10",
+        }
+      : {
+          none: "gap-1",
+          compact: "gap-4 sm:gap-6",
+          normal: "gap-6 sm:gap-8 lg:gap-10",
+          spacious: "gap-8 sm:gap-12 lg:gap-16",
+          monumental: "gap-12 sm:gap-16 lg:gap-24",
+        };
+
+    const navGapClasses: Record<LayoutGap, string> = isNarrowWidth
+      ? {
+          none: "gap-1",
+          compact: "gap-2",
+          normal: "gap-3 sm:gap-4",
+          spacious: "gap-4 sm:gap-6",
+          monumental: "gap-6 sm:gap-8",
+        }
+      : {
+          none: "gap-2",
+          compact: "gap-3.5 sm:gap-4",
+          normal: "gap-5 sm:gap-6 lg:gap-7",
+          spacious: "gap-7 sm:gap-8 lg:gap-10",
+          monumental: "gap-10 sm:gap-12 lg:gap-14",
+        };
 
     const alignClasses: Record<LayoutAlignItems, string> = {
       start: "items-start",
@@ -247,8 +321,22 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
       ? "ml-auto mr-0"
       : "mx-auto";
 
-    const innerY = innerYClasses[layout?.paddingInner || "normal"];
-    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
+    const mobileInnerYClasses: Record<string, string> = {
+      none: "py-1 min-h-[44px]",
+      compact: "py-2 min-h-[52px]",
+      normal: "py-3 min-h-[60px]",
+      spacious: "py-4.5 min-h-[72px]",
+    };
+
+    const isShrinkSlim =
+      scrollShape === "shrink_slim" && isScrolled && !isScrollingUp && currentScroll > 60;
+    const baseInnerY = isMobileLayout
+      ? mobileInnerYClasses[layout?.paddingInner || "normal"]
+      : innerYClasses[layout?.paddingInner || "normal"];
+
+    const innerY = isShrinkSlim
+      ? "py-1.5 md:py-2 min-h-[46px] md:min-h-[54px]"
+      : baseInnerY;
     const effectiveGap = gapClasses[layout?.gap || "normal"];
     const effectiveNavGap = navGapClasses[layout?.gap || "normal"];
     const effectiveAlign = alignClasses[layout?.alignItems || "center"];
@@ -257,6 +345,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
     const isReverse = Boolean(layout?.reverse);
 
     const getDirectionClass = () => {
+      if (isMobileLayout) return "flex-row";
       if (direction === "col") {
         return isReverse ? "flex-col-reverse" : "flex-col";
       }
@@ -294,7 +383,38 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
         ? "justify-around"
         : "justify-between";
 
+    const effectiveJustify = isMobileLayout ? "justify-between" : justifyClass;
+
+    // Resolução de Superfície em 2 Estados (Inicial vs. Ao Rolar)
+    const initialSurface: HeaderSurfaceType =
+      layout?.headerSurfaceInitial ||
+      (layout?.scrollSurface === "transparent_to_glass" ||
+      layout?.scrollSurface === "transparent_to_solid"
+        ? "transparent"
+        : (styles.surfaceVariant as HeaderSurfaceType) || "solid");
+
+    const scrolledSurface: HeaderSurfaceType =
+      layout?.headerSurfaceScrolled ||
+      (layout?.scrollSurface === "transparent_to_glass"
+        ? "glass"
+        : layout?.scrollSurface === "transparent_to_solid" ||
+          layout?.scrollSurface === "glass_to_solid"
+        ? "solid"
+        : initialSurface);
+
+    const activeSurfaceType: HeaderSurfaceType = isScrolled ? scrolledSurface : initialSurface;
+    const isTransparentActive = activeSurfaceType === "transparent";
+
+    const getDynamicSurfaceClasses = () => {
+      return getHeaderSurfaceClasses(activeSurfaceType);
+    };
+
+    const isAutoHide = scrollVisibility === "auto_hide";
+
     const showTopBar =
+      !isMobileLayout &&
+      !isShrinkSlim &&
+      (!isScrolled || activeSurfaceType !== "transparent") &&
       !isHidden("topbar") &&
       ((!isHidden("topPhone") && content.topPhone) ||
         (!isHidden("topEmail") && content.topEmail) ||
@@ -302,25 +422,46 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
 
     const isAutoWidth = layout?.componentWidth === "auto";
 
+    // Resolução Completa de Acabamento da Superfície (Bordas 0px garantido, cores, opacidades, blur e hover)
+    const surfaceResolution = resolveHeaderSurfaceStyle({
+      styles,
+      theme,
+      activeSurfaceType,
+      isCapsuleActive: false,
+      isEdgeToEdge,
+      isTransparentActive,
+    });
+
+    const headerShapeClasses = isEdgeToEdge
+      ? cn(
+          "w-full max-w-none mx-0 mt-0",
+          styles.borderRadius && styles.borderRadius !== "none"
+            ? getRadiusClass(radiusPreset)
+            : "rounded-none"
+        )
+      : cn(
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          "mt-0",
+          getRadiusClass(radiusPreset)
+        );
+
+    // Efeito Auto-Hide Suavizado
+    const autoHideTransformClass =
+      isAutoHide && !isVisible
+        ? "-translate-y-full opacity-0 scale-[0.98] pointer-events-none"
+        : "translate-y-0 opacity-100 scale-100";
+
     return (
       <header
         className={cn(
-          "transition-all relative z-40",
-          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-40",
           isStretchY && "h-full flex-1 flex flex-col",
-          isEdgeToEdge
-            ? "border-b border-white/10 rounded-none border-l-0 border-r-0 border-t-0"
-            : cn("shadow-xl border border-white/10", getRadiusClass(radiusPreset)),
-          getSurfaceClasses(surfaceStyle)
+          headerShapeClasses,
+          autoHideTransformClass,
+          surfaceResolution.className
         )}
         style={{
-          backgroundColor: styles.customSurface || undefined,
-          ...(styles.borderWidth && styles.borderWidth !== "0" && !isEdgeToEdge
-            ? {
-                borderWidth: `${styles.borderWidth}px`,
-                borderColor: styles.borderColor || `${accentColor}40`,
-              }
-            : {}),
+          ...surfaceResolution.style,
         }}
       >
         {/* Barra Superior Corporativa (Topbar) */}
@@ -386,7 +527,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
             isStretchY && "h-full flex-1",
             effectiveContentWidth,
             contentBoxPositionClass,
-            justifyClass,
+            effectiveJustify,
             effectiveAlign,
             getDirectionClass(),
             effectiveGap,
@@ -448,7 +589,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
             {hasNavLinks && (
               <nav
                 className={cn(
-                  "hidden md:flex items-center",
+                  isMobileLayout ? "hidden" : "hidden md:flex items-center",
                   effectiveAlign,
                   effectiveNavGap,
                   isReverse && "flex-row-reverse"
@@ -458,7 +599,10 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
                   <a
                     key={idx}
                     href={getNormalizedHref(item.url)}
-                    className="text-[11px] font-black uppercase tracking-widest opacity-70 hover:opacity-100 transition-opacity relative group py-1"
+                    className={cn(
+                      "font-black uppercase tracking-widest opacity-70 hover:opacity-100 transition-opacity relative group py-1 whitespace-nowrap",
+                      isNarrowWidth ? "text-[10px]" : "text-[11px]"
+                    )}
                   >
                     {item.label}
                     <span
@@ -472,7 +616,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
 
             {/* CTA Desktop */}
             {hasCta && (
-              <div className={cn(hasNavLinks ? "hidden md:block" : "block")}>
+              <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block")}>
                 <SmartButton
                   button={content.ctaButton}
                   elementKey="ctaButton"
@@ -487,7 +631,10 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all flex items-center justify-center shrink-0"
+                className={cn(
+                  "p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all flex items-center justify-center shrink-0",
+                  isMobileLayout ? "flex" : "md:hidden flex"
+                )}
                 aria-label="Abrir Menu"
               >
                 {mobileMenuOpen ? (
@@ -502,7 +649,12 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
 
         {/* GAVETA / DROPDOWN SUSPENSO MOBILE COM EFEITO DE SUPERFÍCIE */}
         {hasMobileMenu && mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl px-4 py-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div
+            className={cn(
+              "border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl px-4 py-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200",
+              !isMobileLayout && "md:hidden"
+            )}
+          >
             <nav className="flex flex-col space-y-2.5">
               {content.navLinks.map((item, idx) => (
                 <a
@@ -518,7 +670,10 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
             </nav>
 
             {hasCta && (
-              <div className="pt-2 border-t border-white/10">
+              <div
+                onClick={() => setMobileMenuOpen(false)}
+                className="pt-2 border-t border-white/10"
+              >
                 <SmartButton
                   button={{
                     ...content.ctaButton,

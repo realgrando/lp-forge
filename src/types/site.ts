@@ -91,6 +91,31 @@ export type BackgroundPattern = "none" | "grid" | "dots" | "noise";
 
 export type GradientDirection = "to-b" | "to-t" | "to-r" | "to-br" | "radial";
 
+export type HeaderScrollVisibility = "fixed" | "auto_hide" | "static";
+
+export type HeaderSurfaceType =
+  | "transparent"
+  | "solid"
+  | "glass"
+  | "bordered"
+  | "3d_floating"
+  | "neon";
+
+export type HeaderScrollSurface =
+  | "keep"
+  | "transparent_to_glass"
+  | "transparent_to_solid"
+  | "glass_to_solid";
+
+export type HeaderScrollShape = "keep" | "shrink_slim" | "to_capsule";
+
+export type HeaderScrollBehavior =
+  | "fixed"            // Fixo Contínuo (fixado desde o topo)
+  | "blur_on_scroll"   // Fosco ao Rolar (transparente no topo -> blur glass ao descer)
+  | "solid_on_scroll"  // Sólido ao Rolar (glass suave no topo -> sólido escuro ao descer)
+  | "floating_capsule" // Cápsula Flutuante ao Rolar (barra total -> cápsula elevada ao descer)
+  | "static";          // Estático (rola livremente com a página)
+
 export interface SectionLayout {
   // CAMADA 1: Container Pai (Seção)
   containerWidth: ContainerWidth;
@@ -100,6 +125,13 @@ export interface SectionLayout {
   paddingY: PaddingScale;
   paddingX?: PaddingScale;
   sticky?: boolean;
+  headerScrollBehavior?: HeaderScrollBehavior; // Legado: Comportamento dinâmico de rolagem
+  scrollVisibility?: HeaderScrollVisibility;   // Fixação & Visibilidade (fixed, auto_hide, static)
+  scrollSurface?: HeaderScrollSurface;         // Legado: Superfície ao rolar
+  headerSurfaceInitial?: HeaderSurfaceType;    // Aba 1: Superfície no Topo (Inicial)
+  headerSurfaceScrolled?: HeaderSurfaceType;   // Aba 2: Superfície ao Rolar (Scrolled)
+  scrollShape?: HeaderScrollShape;             // Formato ao rolar (keep, to_capsule, shrink_slim)
+  headerOverlay?: boolean;                     // Sobrepor ao Hero (fundo contínuo do Hero por trás do header)
   hidden?: boolean;
 
   // CAMADA 2: Container Filho (O Componente)
@@ -118,6 +150,10 @@ export interface SectionLayout {
   contentMaxWidth?: ContentMaxWidth;
 }
 
+export type CardHoverEffect = "none" | "lift" | "glow" | "border_highlight" | "shine";
+export type BorderPosition = "all" | "bottom" | "top_bottom" | "none";
+export type SurfaceBlur = "none" | "sm" | "md" | "lg" | "xl";
+
 export interface SectionStyles {
   customBg?: string;
   customText?: string;
@@ -126,9 +162,14 @@ export interface SectionStyles {
   ambientGlow?: boolean;
   glowColor?: string;
   borderRadius?: BorderRadiusPreset;
-  borderWidth?: "0" | "1" | "2";
+  borderWidth?: "0" | "1" | "2" | "3" | "4";
   borderColor?: string;
+  borderOpacity?: number;
+  borderPosition?: BorderPosition;
   surfaceVariant?: SurfaceStyle;
+  surfaceOpacity?: number;
+  surfaceBlur?: SurfaceBlur;
+  cardHoverEffect?: CardHoverEffect;
   // Background Engine Avançado
   bgPattern?: BackgroundPattern;
   bgGradientEnabled?: boolean;
@@ -137,10 +178,18 @@ export interface SectionStyles {
   bgGradientDirection?: GradientDirection;
   bgImage?: string;
   bgOverlayOpacity?: number;
-  // Divisores e Bordas da Seção
+  // Divisores e Bordas da Seção (Pai)
   borderTop?: boolean;
   borderBottom?: boolean;
   borderGlow?: boolean;
+  // Background Engine do Filho (Card / Superfície)
+  cardPattern?: BackgroundPattern;
+  cardGradientEnabled?: boolean;
+  cardGradientFrom?: string;
+  cardGradientTo?: string;
+  cardGradientDirection?: GradientDirection;
+  cardBgImage?: string;
+  cardBgOverlayOpacity?: number;
   /**
    * Mapa global de opcionalidade por elemento:
    * Se hiddenElements[key] === true, o sub-elemento (badge, subtítulo, card, lista, botão)

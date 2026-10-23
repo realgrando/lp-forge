@@ -10,10 +10,14 @@ import { DynamicIcon } from "@/components/engine/DynamicIcon";
 import {
   buttonConfigSchema,
   ContentMaxWidth,
+  HeaderSurfaceType,
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
+import { useStudioStore } from "@/store/useStudioStore";
+import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 
 const navbarModernSchema = z.object({
   brandName: z.string(),
@@ -141,6 +145,31 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
     const hasMobileMenu = hasNavLinks;
 
+    const viewport = useStudioStore((s) => s.viewport);
+    const isMobileLayout = layout?.containerWidth === "mobile" || viewport === "mobile";
+    const isNarrowWidth = layout?.containerWidth === "narrow" || layout?.componentWidth === "narrow";
+    const isBoxedWidth = layout?.containerWidth === "boxed" || layout?.componentWidth === "boxed";
+
+    // Resolução combinável de Comportamento de Rolagem
+    const scrollVisibility =
+      layout?.scrollVisibility ||
+      (layout?.headerScrollBehavior === "static" || layout?.sticky === false
+        ? "static"
+        : "fixed");
+    const scrollSurface =
+      layout?.scrollSurface ||
+      (layout?.headerScrollBehavior === "blur_on_scroll"
+        ? "transparent_to_glass"
+        : layout?.headerScrollBehavior === "solid_on_scroll"
+        ? "transparent_to_solid"
+        : "keep");
+    const scrollShape = layout?.scrollShape || "keep";
+
+    const { isScrolled, isVisible, isScrollingUp, currentScroll } = useHeaderScroll(
+      scrollVisibility,
+      layout?.sticky !== false
+    );
+
     const direction = layout?.direction || "row";
     const isCol = direction === "col";
     const isResponsive = direction === "responsive";
@@ -167,15 +196,45 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
           spacious: "py-4 md:py-6 min-h-[76px] md:min-h-[92px]",
         };
 
-    const innerPadXClasses: Record<string, string> = {
-      none: "px-0",
-      compact: "px-4 sm:px-6",
-      normal: "px-6 sm:px-10",
-      spacious: "px-10 sm:px-16",
+    const getInnerPadXClass = () => {
+      const scale = layout?.paddingInnerX || (isMobileLayout ? "normal" : "compact");
+      if (scale === "none") return "px-0";
+      if (isMobileLayout) {
+        if (scale === "compact") return "px-3 sm:px-4";
+        if (scale === "normal") return "px-6 sm:px-7";
+        return "px-10 sm:px-12";
+      }
+      if (isNarrowWidth) {
+        if (scale === "compact") return "px-4 sm:px-6";
+        if (scale === "normal") return "px-8 sm:px-10";
+        return "px-12 sm:px-16";
+      }
+      if (isBoxedWidth) {
+        if (scale === "compact") return "px-6 sm:px-8";
+        if (scale === "normal") return "px-10 sm:px-14";
+        return "px-16 sm:px-20 md:px-24";
+      }
+      if (scale === "compact") return "px-6 sm:px-10";
+      if (scale === "normal") return "px-12 sm:px-16 md:px-20";
+      return "px-16 sm:px-24 md:px-32 lg:px-36";
     };
 
-    const innerY = innerYClasses[layout?.paddingInner || "compact"];
-    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
+    const mobileInnerYClasses: Record<string, string> = {
+      none: "py-1 min-h-[44px]",
+      compact: "py-2 min-h-[52px]",
+      normal: "py-3 min-h-[60px]",
+      spacious: "py-4.5 min-h-[72px]",
+    };
+
+    const isShrinkSlim =
+      scrollShape === "shrink_slim" && isScrolled && !isScrollingUp && currentScroll > 60;
+    const baseInnerY = isMobileLayout
+      ? mobileInnerYClasses[layout?.paddingInner || "normal"]
+      : innerYClasses[layout?.paddingInner || "normal"];
+    const innerY = isShrinkSlim
+      ? "py-1.5 md:py-2 min-h-[46px] md:min-h-[54px]"
+      : baseInnerY;
+    const innerPadX = getInnerPadXClass();
 
     const getNormalizedHref = (rawUrl?: string) => {
       if (!rawUrl || rawUrl === "#") return "#";
@@ -202,6 +261,7 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
     const isReverse = Boolean(layout?.reverse);
 
     const getDirectionClass = () => {
+      if (isMobileLayout) return "flex-row";
       if (direction === "col") {
         return isReverse ? "flex-col-reverse" : "flex-col";
       }
@@ -225,39 +285,79 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
         ? "justify-around"
         : "justify-between";
 
+    const effectiveJustify = isMobileLayout ? "justify-between" : justifyClass;
+
+    // Resolução de Superfície em 2 Estados (Inicial vs. Ao Rolar)
+    const initialSurface: HeaderSurfaceType =
+      layout?.headerSurfaceInitial ||
+      (layout?.scrollSurface === "transparent_to_glass" ||
+      layout?.scrollSurface === "transparent_to_solid"
+        ? "transparent"
+        : (styles.surfaceVariant as HeaderSurfaceType) || "solid");
+
+    const scrolledSurface: HeaderSurfaceType =
+      layout?.headerSurfaceScrolled ||
+      (layout?.scrollSurface === "transparent_to_glass"
+        ? "glass"
+        : layout?.scrollSurface === "transparent_to_solid" ||
+          layout?.scrollSurface === "glass_to_solid"
+        ? "solid"
+        : initialSurface);
+
+    const activeSurfaceType: HeaderSurfaceType = isScrolled ? scrolledSurface : initialSurface;
+    const isTransparentActive = activeSurfaceType === "transparent";
+
+    const getDynamicSurfaceClasses = () => {
+      return getHeaderSurfaceClasses(activeSurfaceType);
+    };
+
+    const isAutoHide = scrollVisibility === "auto_hide";
+
     const isAutoWidth = layout?.componentWidth === "auto";
+
+    // Resolução Completa de Acabamento da Superfície (Bordas 0px garantido, cores, opacidades, blur e hover)
+    const surfaceResolution = resolveHeaderSurfaceStyle({
+      styles,
+      theme,
+      activeSurfaceType,
+      isCapsuleActive: false,
+      isEdgeToEdge,
+      isTransparentActive,
+    });
+
+    // Efeito Auto-Hide Suavizado
+    const autoHideTransformClass =
+      isAutoHide && !isVisible
+        ? "-translate-y-full opacity-0 scale-[0.98] pointer-events-none"
+        : "translate-y-0 opacity-100 scale-100";
 
     return (
       <header
         className={cn(
-          "relative z-40 transition-all",
+          "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-40",
           isAutoWidth ? "w-auto max-w-fit" : "w-full",
-          isStretchY && "h-full flex-1 flex flex-col"
+          isStretchY && "h-full flex-1 flex flex-col",
+          autoHideTransformClass
         )}
       >
         <div
           className={cn(
-            "flex transition-all shadow-xl border border-white/10",
-            isAutoWidth ? "w-auto max-w-fit gap-4 sm:gap-6" : "w-full",
+            "flex transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,min-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-xl",
+            isAutoWidth
+              ? "w-auto max-w-fit gap-4 sm:gap-6 rounded-full"
+              : isEdgeToEdge
+              ? "w-full rounded-none"
+              : cn("w-full", getRadiusClass(radiusPreset)),
             isStretchY && "h-full flex-1",
-            justifyClass,
+            effectiveJustify,
             effectiveAlign,
             getDirectionClass(),
             innerY,
             innerPadX,
-            isEdgeToEdge
-              ? "rounded-none border-l-0 border-r-0 border-t-0"
-              : getRadiusClass(radiusPreset),
-            getSurfaceClasses(surfaceStyle)
+            surfaceResolution.className
           )}
           style={{
-            backgroundColor: styles.customSurface || undefined,
-            ...(styles.borderWidth && styles.borderWidth !== "0" && !isEdgeToEdge
-              ? {
-                  borderWidth: `${styles.borderWidth}px`,
-                  borderColor: styles.borderColor || `${accentColor}40`,
-                }
-              : {}),
+            ...surfaceResolution.style,
           }}
         >
           {/* Marca */}
@@ -304,12 +404,20 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
 
           {/* Links Centrais (Desktop) */}
           {hasNavLinks && (
-            <nav className="hidden md:flex items-center gap-6 lg:gap-8 mx-4">
+            <nav
+              className={cn(
+                isMobileLayout ? "hidden" : "hidden md:flex items-center",
+                isNarrowWidth ? "gap-3 lg:gap-4 mx-2" : "gap-5 lg:gap-8 mx-3 lg:mx-4"
+              )}
+            >
               {content.navLinks.map((item, idx) => (
                 <a
                   key={idx}
                   href={getNormalizedHref(item.url)}
-                  className="text-xs font-semibold opacity-75 hover:opacity-100 transition-opacity relative group py-1"
+                  className={cn(
+                    "font-semibold opacity-75 hover:opacity-100 transition-opacity relative group py-1 whitespace-nowrap",
+                    isNarrowWidth ? "text-[11px]" : "text-xs"
+                  )}
                 >
                   {item.label}
                   <span
@@ -324,7 +432,7 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
           {/* Ações Direita */}
           <div className="flex items-center gap-2.5 shrink-0">
             {hasCta && (
-              <div className={cn(hasNavLinks ? "hidden md:block" : "block")}>
+              <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block")}>
                 <SmartButton
                   button={content.ctaButton}
                   elementKey="ctaButton"
@@ -339,7 +447,10 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all flex items-center justify-center shrink-0"
+                className={cn(
+                  "p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all flex items-center justify-center shrink-0",
+                  isMobileLayout ? "flex" : "md:hidden flex"
+                )}
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? (
@@ -354,7 +465,12 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
 
         {/* GAVETA SUSPENSA MOBILE */}
         {hasMobileMenu && mobileMenuOpen && (
-          <div className="md:hidden mt-2 p-4 rounded-2xl border border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div
+            className={cn(
+              "mt-2 p-4 rounded-2xl border border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200",
+              !isMobileLayout && "md:hidden"
+            )}
+          >
             <nav className="flex flex-col space-y-1.5">
               {content.navLinks.map((item, idx) => (
                 <a
@@ -370,7 +486,10 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
             </nav>
 
             {hasCta && (
-              <div className="pt-2 border-t border-white/10">
+              <div
+                onClick={() => setMobileMenuOpen(false)}
+                className="pt-2 border-t border-white/10"
+              >
                 <SmartButton
                   button={{
                     ...content.ctaButton,

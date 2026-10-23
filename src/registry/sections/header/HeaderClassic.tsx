@@ -10,10 +10,14 @@ import { DynamicIcon } from "@/components/engine/DynamicIcon";
 import {
   buttonConfigSchema,
   ContentMaxWidth,
+  HeaderSurfaceType,
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
+import { useStudioStore } from "@/store/useStudioStore";
+import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 
 const headerClassicSchema = z.object({
   brandName: z.string(),
@@ -100,16 +104,29 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
   ],
   defaultData: {
     layout: {
-      paddingY: "none",
-      paddingInner: "normal",
-      paddingX: "normal",
       containerWidth: "full",
+      containerAlignX: "center",
+      containerAlignY: "center",
+      minHeight: "auto",
+      paddingY: "none",
+      paddingX: "none",
       sticky: true,
+      componentWidth: "full",
+      direction: "row",
+      reverse: false,
+      paddingInner: "normal",
+      paddingInnerX: "spacious",
+      distribution: "between",
+      alignItems: "center",
+      gap: "normal",
+      contentMaxWidth: "full",
     },
     styles: {
       surfaceVariant: "solid",
       borderRadius: "none",
+      borderWidth: "1",
       ambientGlow: false,
+      bgGradientEnabled: false,
       hiddenElements: {},
     },
     content: {
@@ -130,7 +147,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
         url: "#contato",
         variant: "solid",
         size: "sm",
-        radius: "md",
+        radius: "sm",
         iconName: "ArrowRight",
         iconPosition: "right",
       },
@@ -151,6 +168,30 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
     const hasCta =
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
     const hasMobileMenu = hasNavLinks;
+    const viewport = useStudioStore((s) => s.viewport);
+    const isMobileLayout = layout?.containerWidth === "mobile" || viewport === "mobile";
+    const isNarrowWidth = layout?.containerWidth === "narrow" || layout?.componentWidth === "narrow";
+    const isBoxedWidth = layout?.containerWidth === "boxed" || layout?.componentWidth === "boxed";
+
+    // Resolução combinável de Comportamento de Rolagem
+    const scrollVisibility =
+      layout?.scrollVisibility ||
+      (layout?.headerScrollBehavior === "static" || layout?.sticky === false
+        ? "static"
+        : "fixed");
+    const scrollSurface =
+      layout?.scrollSurface ||
+      (layout?.headerScrollBehavior === "blur_on_scroll"
+        ? "transparent_to_glass"
+        : layout?.headerScrollBehavior === "solid_on_scroll"
+        ? "transparent_to_solid"
+        : "keep");
+    const scrollShape = layout?.scrollShape || "keep";
+
+    const { isScrolled, isVisible, isScrollingUp, currentScroll } = useHeaderScroll(
+      scrollVisibility,
+      layout?.sticky !== false
+    );
 
     const direction = layout?.direction || "row";
     const isCol = direction === "col";
@@ -179,32 +220,65 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
           spacious: "py-4 md:py-8 min-h-[72px] md:min-h-[110px]",
         };
 
-    // Respiro Interno Lateral Horizontal do Header (Camada 2 - Container Filho)
-    const innerPadXClasses: Record<string, string> = {
-      none: "px-0",
-      compact: "px-3 sm:px-5",
-      normal: "px-5 sm:px-8",
-      spacious: "px-8 sm:px-14",
+    // Respiro Interno Lateral Horizontal do Header adaptativo com passos progressivos nítidos
+    const getInnerPadXClass = () => {
+      const scale = layout?.paddingInnerX || (isMobileLayout ? "normal" : "spacious");
+      if (scale === "none") return "px-0";
+      if (isMobileLayout) {
+        if (scale === "compact") return "px-3 sm:px-4";
+        if (scale === "normal") return "px-6 sm:px-7";
+        return "px-10 sm:px-12";
+      }
+      if (isNarrowWidth) {
+        if (scale === "compact") return "px-4 sm:px-6";
+        if (scale === "normal") return "px-8 sm:px-10";
+        return "px-12 sm:px-16";
+      }
+      if (isBoxedWidth) {
+        if (scale === "compact") return "px-6 sm:px-8";
+        if (scale === "normal") return "px-10 sm:px-14";
+        return "px-16 sm:px-20 md:px-24";
+      }
+      // full
+      if (scale === "compact") return "px-6 sm:px-10";
+      if (scale === "normal") return "px-12 sm:px-16 md:px-20";
+      return "px-16 sm:px-24 md:px-32 lg:px-36";
     };
 
-    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
+    const innerPadX = getInnerPadXClass();
 
-    // Espaçamento entre Itens (Gap)
-    const gapClasses: Record<LayoutGap, string> = {
-      none: "gap-1",
-      compact: "gap-4 sm:gap-6",
-      normal: "gap-8 sm:gap-10",
-      spacious: "gap-12 sm:gap-16",
-      monumental: "gap-16 sm:gap-24",
-    };
+    // Espaçamento entre Itens (Gap) adaptativo
+    const gapClasses: Record<LayoutGap, string> = isNarrowWidth
+      ? {
+          none: "gap-1",
+          compact: "gap-2 sm:gap-3",
+          normal: "gap-4 sm:gap-6",
+          spacious: "gap-6 sm:gap-8",
+          monumental: "gap-8 sm:gap-10",
+        }
+      : {
+          none: "gap-1",
+          compact: "gap-4 sm:gap-6",
+          normal: "gap-6 sm:gap-8 lg:gap-10",
+          spacious: "gap-8 sm:gap-12 lg:gap-16",
+          monumental: "gap-12 sm:gap-16 lg:gap-24",
+        };
 
-    const navGapClasses: Record<LayoutGap, string> = {
-      none: "gap-2",
-      compact: "gap-4",
-      normal: "gap-7",
-      spacious: "gap-10",
-      monumental: "gap-14",
-    };
+    const navGapClasses: Record<LayoutGap, string> = isNarrowWidth
+      ? {
+          none: "gap-1",
+          compact: "gap-2",
+          normal: "gap-3 sm:gap-4",
+          spacious: "gap-4 sm:gap-6",
+          monumental: "gap-6 sm:gap-8",
+        }
+      : {
+          none: "gap-2",
+          compact: "gap-3.5 sm:gap-4",
+          normal: "gap-5 sm:gap-6 lg:gap-7",
+          spacious: "gap-7 sm:gap-8 lg:gap-10",
+          monumental: "gap-10 sm:gap-12 lg:gap-14",
+        };
 
     // Alinhamento Transversal
     const alignClasses: Record<LayoutAlignItems, string> = {
@@ -237,7 +311,23 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       ? "ml-auto mr-0"
       : "mx-auto";
 
-    const innerY = innerYClasses[layout?.paddingInner || "normal"];
+    const mobileInnerYClasses: Record<string, string> = {
+      none: "py-1 min-h-[44px]",
+      compact: "py-2 min-h-[52px]",
+      normal: "py-3 min-h-[60px]",
+      spacious: "py-4.5 min-h-[72px]",
+    };
+
+    // Encolhe ao descer a página, e desencolhe suavemente ao rolar para cima (intenção de uso)
+    const isShrinkSlim =
+      scrollShape === "shrink_slim" && isScrolled && !isScrollingUp && currentScroll > 60;
+    const baseInnerY = isMobileLayout
+      ? mobileInnerYClasses[layout?.paddingInner || "normal"]
+      : innerYClasses[layout?.paddingInner || "normal"];
+
+    const innerY = isShrinkSlim
+      ? "py-1.5 md:py-2 min-h-[46px] md:min-h-[54px]"
+      : baseInnerY;
     const effectiveGap = gapClasses[layout?.gap || "normal"];
     const effectiveNavGap = navGapClasses[layout?.gap || "normal"];
     const effectiveAlign = alignClasses[layout?.alignItems || "center"];
@@ -246,6 +336,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
     const isReverse = Boolean(layout?.reverse);
 
     const getHeaderDirectionClass = () => {
+      if (isMobileLayout) return "flex-row";
       if (direction === "col") {
         return isReverse ? "flex-col-reverse" : "flex-col";
       }
@@ -283,17 +374,19 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
         ? "justify-around"
         : "justify-between";
 
+    const effectiveJustify = isMobileLayout ? "justify-between" : justifyClass;
+
     const isAutoWidth = layout?.componentWidth === "auto";
 
     const renderHeaderInner = () => (
       <div
         className={cn(
-          "flex transition-all",
+          "flex transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isAutoWidth ? "w-auto max-w-fit gap-4 sm:gap-6" : "w-full",
           isStretchY && "h-full flex-1",
           effectiveContentWidth,
           contentBoxPositionClass,
-          justifyClass,
+          effectiveJustify,
           effectiveAlign,
           effectiveGap,
           innerY,
@@ -355,7 +448,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
           {hasNavLinks && (
             <nav
               className={cn(
-                "hidden md:flex items-center",
+                isMobileLayout ? "hidden" : "hidden md:flex items-center",
                 effectiveNavGap,
                 isReverse && "flex-row-reverse"
               )}
@@ -364,7 +457,10 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
                 <a
                   key={idx}
                   href={getNormalizedHref(item.url)}
-                  className="text-[12px] font-medium tracking-wide opacity-80 hover:opacity-100 transition-opacity hover:text-[#FFBE2E]"
+                  className={cn(
+                    "font-medium tracking-wide opacity-80 hover:opacity-100 transition-opacity hover:text-[#FFBE2E] whitespace-nowrap",
+                    isNarrowWidth ? "text-[11px] lg:text-[12px]" : "text-[12px]"
+                  )}
                 >
                   {item.label}
                 </a>
@@ -374,7 +470,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
 
           {/* CTA no desktop (ou mobile se não houver menu hamburger) */}
           {hasCta && (
-            <div className={cn(hasNavLinks ? "hidden md:block" : "block")}>
+            <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block")}>
               <SmartButton
                 button={content.ctaButton}
                 elementKey="ctaButton"
@@ -389,7 +485,12 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
             <button
               type="button"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
-              className="md:hidden p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all focus:outline-none border border-white/10 bg-white/5"
+              className={cn(
+                "p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-white/10 active:bg-white/15 transition-all focus:outline-none border border-white/10 bg-white/5",
+                isMobileLayout
+                  ? "flex items-center justify-center"
+                  : "md:hidden flex items-center justify-center"
+              )}
               aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
             >
               {mobileMenuOpen ? (
@@ -410,7 +511,8 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       return (
         <div
           className={cn(
-            "md:hidden w-full border-t border-white/10 px-5 py-4 flex flex-col gap-3.5 animate-in fade-in-50 slide-in-from-top-2 duration-200",
+            "w-full border-t border-white/10 px-5 py-4 flex flex-col gap-3.5 animate-in fade-in-50 slide-in-from-top-2 duration-200",
+            !isMobileLayout && "md:hidden",
             surfaceStyle !== "solid" && "backdrop-blur-xl"
           )}
           style={{
@@ -434,7 +536,10 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
           )}
 
           {hasCta && (
-            <div className={cn(hasNavLinks && "pt-3 border-t border-white/10")}>
+            <div
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(hasNavLinks && "pt-3 border-t border-white/10")}
+            >
               <SmartButton
                 button={content.ctaButton}
                 elementKey="ctaButton"
@@ -448,52 +553,70 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       );
     };
 
-    // MODO A: BARRA TOTAL (Edge-to-Edge, estilo Nivix LP / Barra Fixa)
-    if (isEdgeToEdge) {
-      return (
-        <header
-          className={cn(
-            "w-full transition-all border-b border-white/10 backdrop-blur-md",
-            isStretchY && "h-full flex-1 flex flex-col",
-            styles.borderRadius && styles.borderRadius !== "none"
-              ? getRadiusClass(radiusPreset)
-              : "rounded-none border-l-0 border-r-0 border-t-0",
-            getSurfaceClasses(surfaceStyle)
-          )}
-          style={{
-            backgroundColor: styles.customSurface || undefined,
-            ...(styles.borderWidth && styles.borderWidth !== "0"
-              ? { borderBottomWidth: `${styles.borderWidth}px` }
-              : styles.borderWidth === "0"
-              ? { borderBottomWidth: "0px" }
-              : {}),
-            ...(styles.borderColor ? { borderColor: styles.borderColor } : {}),
-          }}
-        >
-          {renderHeaderInner()}
-          {renderMobileDrawer()}
-        </header>
-      );
-    }
+    // Resolução de Superfície em 2 Estados (Inicial vs. Ao Rolar)
+    const initialSurface: HeaderSurfaceType =
+      layout?.headerSurfaceInitial ||
+      (layout?.scrollSurface === "transparent_to_glass" ||
+      layout?.scrollSurface === "transparent_to_solid"
+        ? "transparent"
+        : (styles.surfaceVariant as HeaderSurfaceType) || "solid");
 
-    // MODO B: CÁPSULA FLUTUANTE (Padrão 1024px / Estreito 768px / Mobile 448px)
+    const scrolledSurface: HeaderSurfaceType =
+      layout?.headerSurfaceScrolled ||
+      (layout?.scrollSurface === "transparent_to_glass"
+        ? "glass"
+        : layout?.scrollSurface === "transparent_to_solid" ||
+          layout?.scrollSurface === "glass_to_solid"
+        ? "solid"
+        : initialSurface);
+
+    const activeSurfaceType: HeaderSurfaceType = isScrolled ? scrolledSurface : initialSurface;
+    const isTransparentActive = activeSurfaceType === "transparent";
+
+    // Resolução de Geometria / Formato Dinâmico
+    const isAutoHide = scrollVisibility === "auto_hide";
+
+    // Resolução Completa de Acabamento da Superfície (Bordas 0px garantido, cores, opacidades, blur e hover)
+    const surfaceResolution = resolveHeaderSurfaceStyle({
+      styles,
+      theme,
+      activeSurfaceType,
+      isCapsuleActive: false,
+      isEdgeToEdge,
+      isTransparentActive,
+    });
+
+    // Forma da barra: respeita 100% as opções estruturais do usuário (Camadas 1 e 2)
+    const headerShapeClasses = isEdgeToEdge
+      ? cn(
+          "w-full max-w-none mx-0 mt-0",
+          styles.borderRadius && styles.borderRadius !== "none"
+            ? getRadiusClass(radiusPreset)
+            : "rounded-none"
+        )
+      : cn(
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          "mt-0",
+          getRadiusClass(radiusPreset)
+        );
+
+    // Efeito Auto-Hide Suavizado: desliza suavemente para cima com leve fade e escala orgânica
+    const autoHideTransformClass =
+      isAutoHide && !isVisible
+        ? "-translate-y-full opacity-0 scale-[0.98] pointer-events-none"
+        : "translate-y-0 opacity-100 scale-100";
+
     return (
       <header
         className={cn(
-          "transition-all shadow-xl overflow-hidden",
-          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-30",
           isStretchY && "h-full flex-1 flex flex-col",
-          getSurfaceClasses(surfaceStyle),
-          getRadiusClass(radiusPreset)
+          headerShapeClasses,
+          autoHideTransformClass,
+          surfaceResolution.className
         )}
         style={{
-          backgroundColor: styles.customSurface || undefined,
-          ...(styles.borderWidth && styles.borderWidth !== "0"
-            ? { borderWidth: `${styles.borderWidth}px` }
-            : styles.borderWidth === "0"
-            ? { borderWidth: "0px" }
-            : {}),
-          ...(styles.borderColor ? { borderColor: styles.borderColor } : {}),
+          ...surfaceResolution.style,
         }}
       >
         {renderHeaderInner()}

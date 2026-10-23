@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { cn } from "@/lib/utils";
+import { cn, getRadiusClass } from "@/lib/utils";
 import {
   ComponentWidth,
   ContainerAlignX,
@@ -28,6 +28,8 @@ interface SectionWrapperProps {
   isSelected?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
+  isFirstAfterHeader?: boolean;
+  headerOverlayEnabled?: boolean;
   onSelect?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -90,8 +92,8 @@ export const CONTAINER_ALIGN_Y_MAP: Record<ContainerAlignY, string> = {
 export const COMPONENT_WIDTH_MAP: Record<ComponentWidth, string> = {
   full: "w-full max-w-none",
   boxed: "w-full max-w-5xl",
-  narrow: "w-full max-w-3xl",
   auto: "w-auto max-w-fit",
+  narrow: "w-full max-w-3xl",
 };
 
 // Limite de Leitura de Texto (Content Max Width / Prosa — Camada Interna Independente)
@@ -118,12 +120,38 @@ const PADDING_INNER_MAP: Record<PaddingScale, string> = {
   spacious: "py-10 md:py-20",
 };
 
-// Padding Lateral Horizontal (Respiro das bordas da tela)
-const PADDING_X_MAP: Record<PaddingScale, string> = {
+// Padding Lateral Horizontal (Respiro das bordas da tela) adaptativo conforme largura do container
+export const getAdaptivePaddingXClass = (
+  scale: PaddingScale = "normal",
+  containerWidth: ContainerWidth = "full"
+): string => {
+  if (scale === "none") return "px-0";
+  if (containerWidth === "mobile") {
+    if (scale === "compact") return "px-3";
+    if (scale === "normal") return "px-6";
+    return "px-10";
+  }
+  if (containerWidth === "narrow") {
+    if (scale === "compact") return "px-4 sm:px-6";
+    if (scale === "normal") return "px-8 sm:px-10";
+    return "px-12 sm:px-16";
+  }
+  if (containerWidth === "boxed") {
+    if (scale === "compact") return "px-5 sm:px-8";
+    if (scale === "normal") return "px-10 sm:px-14 md:px-16";
+    return "px-14 sm:px-20 md:px-24";
+  }
+  // full
+  if (scale === "compact") return "px-6 sm:px-10 md:px-12";
+  if (scale === "normal") return "px-10 sm:px-16 md:px-24 lg:px-28";
+  return "px-14 sm:px-24 md:px-36 lg:px-44 xl:px-48";
+};
+
+export const PADDING_X_MAP: Record<PaddingScale, string> = {
   none: "px-0",
-  compact: "px-3 sm:px-6",
-  normal: "px-4 sm:px-8 lg:px-12",
-  spacious: "px-5 sm:px-12 lg:px-24",
+  compact: "px-6 sm:px-10 md:px-12",
+  normal: "px-10 sm:px-16 md:px-24 lg:px-28",
+  spacious: "px-14 sm:px-24 md:px-36 lg:px-44 xl:px-48",
 };
 
 // Largura Máxima da Seção (Container Pai)
@@ -133,6 +161,25 @@ const CONTAINER_MAX_WIDTH_CLASSES: Record<ContainerWidth, string> = {
   narrow: "w-full max-w-4xl",
   mobile: "w-full max-w-md",
 };
+
+export function isColorTransparent(color?: string): boolean {
+  if (!color) return true;
+  const c = color.trim().toLowerCase();
+  if (c === "transparent") return true;
+  if (c.startsWith("#")) {
+    const hex = c.slice(1);
+    if (hex.length === 8 && hex.endsWith("00")) return true;
+    if (hex.length === 4 && hex.endsWith("0")) return true;
+  }
+  if (
+    (c.startsWith("rgba") && (c.includes(", 0)") || c.includes(",0)"))) ||
+    c.includes(", 0.0)") ||
+    c.includes(",0.0)")
+  ) {
+    return true;
+  }
+  return false;
+}
 
 /**
  * Invólucro Universal de Seção (Macro-camada).
@@ -148,6 +195,8 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   isSelected = false,
   isFirst = false,
   isLast = false,
+  isFirstAfterHeader = false,
+  headerOverlayEnabled = true,
   onSelect,
   onMoveUp,
   onMoveDown,
@@ -165,6 +214,15 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   }
 
   const isHeader = section.type.startsWith("header.");
+  const scrollVisibility =
+    layout.scrollVisibility ||
+    (layout.headerScrollBehavior === "static" || layout.sticky === false
+      ? "static"
+      : "fixed");
+  const isSticky = isHeader ? scrollVisibility !== "static" : Boolean(layout.sticky);
+  const isOverlayActive = isHeader
+    ? layout.headerOverlay !== false
+    : isFirstAfterHeader && headerOverlayEnabled;
   const isHero = section.type.startsWith("hero.");
   const effectiveContainerWidth: ContainerWidth =
     layout.containerWidth || (isHeader ? "full" : "boxed");
@@ -183,7 +241,20 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   const effectiveComponentWidth: ComponentWidth =
     layout.componentWidth || (section.type === "header.capsule" ? "auto" : "full");
 
-  const bgColor = styles.customBg || "transparent";
+  // Respiro Vertical Externo com compensação harmônica quando o Header sobrepõe o Hero
+  const getOuterPaddingYClass = () => {
+    if (rawContainer) return "py-0";
+    if (isFirstAfterHeader && isOverlayActive) {
+      if (effectivePaddingY === "none") return "pt-20 md:pt-24 pb-0";
+      if (effectivePaddingY === "compact") return "pt-24 md:pt-28 pb-4 md:pb-8";
+      if (effectivePaddingY === "normal") return "pt-28 md:pt-36 pb-8 md:pb-16";
+      return "pt-32 md:pt-44 pb-12 md:pb-24";
+    }
+    return PADDING_OUTER_MAP[effectivePaddingY];
+  };
+
+  const isCustomBgTransparent = isColorTransparent(styles.customBg);
+  const bgColor = isCustomBgTransparent ? "transparent" : (styles.customBg || "transparent");
   const textColor = styles.customText || theme.palette.foreground;
   const accentColor = styles.customAccent || theme.palette.accent;
   const glowColor = styles.glowColor || accentColor;
@@ -192,7 +263,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   let backgroundStyle: string = bgColor;
   if (styles.bgGradientEnabled) {
     const fromColor = styles.bgGradientFrom || "#09090b";
-    const toColor = styles.bgGradientTo || styles.customBg || "#18181b";
+    const toColor = styles.bgGradientTo || (isCustomBgTransparent ? "#18181b" : styles.customBg) || "#18181b";
     const dir = styles.bgGradientDirection || "to-b";
     if (dir === "radial") {
       backgroundStyle = `radial-gradient(circle at center, ${fromColor}, ${toColor})`;
@@ -207,7 +278,194 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
     }
   }
 
+  const hasVisibleBg =
+    (!isCustomBgTransparent && Boolean(styles.customBg)) ||
+    Boolean(styles.bgGradientEnabled) ||
+    Boolean(styles.bgImage);
+
   const sectionDomId = section.anchorId?.trim().replace(/^#+/, "") || section.id;
+  const parentRadiusPreset = styles.borderRadius || theme.tokens?.borderRadius || "md";
+  const parentRadiusClass = getRadiusClass(parentRadiusPreset);
+
+  // Afastamento vertical da tag <section> na página
+  const getSectionPaddingClass = () => {
+    if (isFullWidth) {
+      return getOuterPaddingYClass();
+    }
+    // Quando o container pai é contido (boxed, narrow, mobile):
+    // A tag <section> fornece o respiro externo na página/body
+    if (isHeader) return "py-0 px-3 sm:px-6";
+    if (isFirstAfterHeader && isOverlayActive) {
+      return "pt-0 pb-4 md:pb-8 px-3 sm:px-6";
+    }
+    return "py-4 md:py-8 px-3 sm:px-6";
+  };
+
+  // Afastamento interno do Container Pai (quando não for full width, ele recebe o padding Y)
+  const getParentContainerPaddingClass = () => {
+    const pxClass = rawContainer
+      ? "px-0"
+      : getAdaptivePaddingXClass(effectivePaddingX, effectiveContainerWidth);
+    if (isFullWidth) {
+      return pxClass;
+    }
+    // Para containers contidos, o respiro vertical configurado (paddingY) fica dentro do box colorido
+    const pyClass = getOuterPaddingYClass();
+    return cn(pxClass, pyClass);
+  };
+
+  // Renderizador centralizado de camadas visuais de fundo (imagem, padrões, divisores e luz ambiente)
+  const renderBackgroundLayers = (isContained: boolean) => {
+    const hasAnyBg =
+      hasVisibleBg ||
+      (styles.bgPattern && styles.bgPattern !== "none") ||
+      Boolean(styles.ambientGlow);
+
+    if (!hasAnyBg) return null;
+
+    return (
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-0 overflow-hidden transition-all duration-300",
+          isContained ? parentRadiusClass : "rounded-none",
+          isContained && hasVisibleBg && "shadow-2xl shadow-black/25"
+        )}
+        style={isContained && hasVisibleBg ? { background: backgroundStyle } : undefined}
+      >
+        {/* Imagem de Fundo Global da Seção */}
+        {styles.bgImage && (
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <img
+              src={styles.bgImage}
+              alt=""
+              className="w-full h-full object-cover object-center"
+            />
+            <div
+              className="absolute inset-0 bg-black"
+              style={{ opacity: (styles.bgOverlayOpacity ?? 70) / 100 }}
+            />
+          </div>
+        )}
+
+        {/* Padrões & Texturas de Fundo */}
+        {styles.bgPattern === "grid" && (
+          <div
+            className="absolute inset-0 z-0 opacity-20"
+            style={{
+              backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px)`,
+              backgroundSize: "40px 40px",
+              maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+            }}
+          />
+        )}
+        {styles.bgPattern === "dots" && (
+          <div
+            className="absolute inset-0 z-0 opacity-25"
+            style={{
+              backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)`,
+              backgroundSize: "24px 24px",
+              maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+            }}
+          />
+        )}
+        {styles.bgPattern === "noise" && (
+          <div
+            className="absolute inset-0 z-0 opacity-10 mix-blend-overlay"
+            style={{
+              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 1px, transparent 0)`,
+              backgroundSize: "6px 6px",
+            }}
+          />
+        )}
+
+        {/* Luz Ambiente Suave (Ambient Glow) Contida & Difusa */}
+        {styles.ambientGlow && (
+          <div className="absolute inset-x-0 top-0 h-[450px] overflow-hidden flex justify-center z-0">
+            <div
+              className="w-[620px] h-[320px] -mt-10 rounded-full blur-[140px] opacity-25"
+              style={{ backgroundColor: glowColor }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Divisores de Seção (Bordas Superior e Inferior com Linha Base e Glow Neon Vibrante)
+  const renderDividers = (isContained: boolean) => {
+    if (!styles.borderTop && !styles.borderBottom) return null;
+
+    return (
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-20 overflow-hidden",
+          isContained ? parentRadiusClass : "rounded-none"
+        )}
+      >
+        {/* Divisor Superior (Top Divider) */}
+        {styles.borderTop && (
+          <div className="absolute top-0 inset-x-0 h-[2px]">
+            {/* Linha base sutil em toda a extensão */}
+            <div className="absolute inset-x-0 top-0 h-[1px] bg-white/15" />
+
+            {/* Feixe e Brilho Glow (quando ativado) */}
+            {styles.borderGlow && (
+              <>
+                {/* Aura Neon Difusa */}
+                <div
+                  className="absolute -top-[2px] left-1/2 -translate-x-1/2 w-4/5 max-w-4xl h-[6px] blur-[3px] opacity-80"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, transparent 0%, ${accentColor} 25%, ${accentColor} 75%, transparent 100%)`,
+                  }}
+                />
+                {/* Feixe Central Luminoso com Drop Shadow e Box Shadow */}
+                <div
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-3xl h-[1.5px]"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, transparent 0%, ${accentColor} 20%, ${accentColor} 80%, transparent 100%)`,
+                    boxShadow: `0 0 10px 1px ${accentColor}, 0 0 20px 2px ${accentColor}`,
+                  }}
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Divisor Inferior (Bottom Divider) */}
+        {styles.borderBottom && (
+          <div className="absolute bottom-0 inset-x-0 h-[2px]">
+            {/* Linha base sutil em toda a extensão */}
+            <div className="absolute inset-x-0 bottom-0 h-[1px] bg-white/15" />
+
+            {/* Feixe e Brilho Glow (quando ativado) */}
+            {styles.borderGlow && (
+              <>
+                {/* Aura Neon Difusa */}
+                <div
+                  className="absolute -bottom-[2px] left-1/2 -translate-x-1/2 w-4/5 max-w-4xl h-[6px] blur-[3px] opacity-80"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, transparent 0%, ${accentColor} 25%, ${accentColor} 75%, transparent 100%)`,
+                  }}
+                />
+                {/* Feixe Central Luminoso com Drop Shadow e Box Shadow */}
+                <div
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 max-w-3xl h-[1.5px]"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, transparent 0%, ${accentColor} 20%, ${accentColor} 80%, transparent 100%)`,
+                    boxShadow: `0 0 10px 1px ${accentColor}, 0 0 20px 2px ${accentColor}`,
+                  }}
+                />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <section
@@ -221,7 +479,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       }}
       style={
         {
-          background: backgroundStyle,
+          background: isFullWidth && hasVisibleBg ? backgroundStyle : "transparent",
           color: textColor,
           "--site-accent": accentColor,
           "--site-primary": styles.customAccent || theme.palette.primary,
@@ -233,9 +491,10 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         } as React.CSSProperties
       }
       className={cn(
-        "relative transition-all duration-200 flex flex-col",
-        layout.sticky ? "sticky top-0 z-40" : "overflow-hidden",
-        rawContainer ? "py-0" : PADDING_OUTER_MAP[effectivePaddingY],
+        "relative transition-all duration-300 flex flex-col",
+        isHeader && isOverlayActive && "-mb-[4.5rem] md:-mb-[5rem] z-40 pointer-events-auto",
+        isSticky ? "sticky top-0 z-40" : "overflow-hidden",
+        getSectionPaddingClass(),
         MIN_HEIGHT_MAP[layout.minHeight || "auto"],
         CONTAINER_ALIGN_Y_MAP[effectiveAlignY],
         layout.hidden && isEditor && "opacity-40 grayscale",
@@ -250,106 +509,11 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       {section.anchorId && section.anchorId.trim() !== section.id && (
         <span id={section.id} className="sr-only pointer-events-none" aria-hidden="true" />
       )}
-      {/* Imagem de Fundo Global da Seção */}
-      {styles.bgImage && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-        >
-          <img
-            src={styles.bgImage}
-            alt=""
-            className="w-full h-full object-cover object-center"
-          />
-          <div
-            className="absolute inset-0 bg-black"
-            style={{ opacity: (styles.bgOverlayOpacity ?? 70) / 100 }}
-          />
-        </div>
-      )}
 
-      {/* Padrões & Texturas de Fundo */}
-      {styles.bgPattern === "grid" && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 opacity-20"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-            backgroundSize: "40px 40px",
-            maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
-          }}
-        />
-      )}
-      {styles.bgPattern === "dots" && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 opacity-25"
-          style={{
-            backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)`,
-            backgroundSize: "24px 24px",
-            maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
-          }}
-        />
-      )}
-      {styles.bgPattern === "noise" && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 opacity-10 mix-blend-overlay"
-          style={{
-            backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 1px, transparent 0)`,
-            backgroundSize: "6px 6px",
-          }}
-        />
-      )}
-
-      {/* Divisores de Seção (Bordas Superior e Inferior) */}
-      {styles.borderTop && (
-        <div
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute top-0 z-10",
-            styles.borderGlow
-              ? "left-1/2 -translate-x-1/2 w-3/4 max-w-5xl h-[1px]"
-              : "inset-x-0 h-[1px] bg-white/10"
-          )}
-          style={
-            styles.borderGlow
-              ? {
-                  backgroundImage: `linear-gradient(to right, transparent, ${accentColor}, transparent)`,
-                }
-              : undefined
-          }
-        />
-      )}
-      {styles.borderBottom && (
-        <div
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute bottom-0 z-10",
-            styles.borderGlow
-              ? "left-1/2 -translate-x-1/2 w-3/4 max-w-5xl h-[1px]"
-              : "inset-x-0 h-[1px] bg-white/10"
-          )}
-          style={
-            styles.borderGlow
-              ? {
-                  backgroundImage: `linear-gradient(to right, transparent, ${accentColor}, transparent)`,
-                }
-              : undefined
-          }
-        />
-      )}
-
-      {/* Luz Ambiente Suave (Ambient Glow) */}
-      {styles.ambientGlow && (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[520px] h-[320px] rounded-full blur-[130px] opacity-20 z-0"
-          style={{ backgroundColor: glowColor }}
-        />
-      )}
+      {/* Camada de Fundo em Largura Total (quando o container pai for full) */}
+      {isFullWidth && renderBackgroundLayers(false)}
+      {/* Divisores de Seção em Largura Total (quando o container pai for full) */}
+      {isFullWidth && renderDividers(false)}
 
       {/* Barra Flutuante de Controle Rápido no Modo Editor */}
       {isEditor && (
@@ -426,14 +590,22 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           "w-full flex transition-all duration-200 relative z-10",
           CONTAINER_MAX_WIDTH_CLASSES[effectiveContainerWidth],
           CONTAINER_ALIGN_X_MAP[effectiveAlignX],
-          rawContainer ? "px-0" : PADDING_X_MAP[effectivePaddingX],
+          getParentContainerPaddingClass(),
           effectiveAlignY === "stretch" && "h-full flex-1",
           isEditor &&
             isSelected &&
             activeInspectorLayer === "parent" &&
-            "outline-2 outline-dashed outline-sky-400 bg-sky-500/[0.02] rounded-xl"
+            cn(
+              "outline-2 outline-dashed outline-sky-400",
+              !isFullWidth ? parentRadiusClass : "rounded-xl"
+            )
         )}
       >
+        {/* Camada de Fundo do Pai Contido (quando não for full-width) */}
+        {!isFullWidth && renderBackgroundLayers(true)}
+        {/* Divisores do Pai Contido (quando não for full-width) */}
+        {!isFullWidth && renderDividers(true)}
+
         {isEditor && isSelected && activeInspectorLayer === "parent" && (
           <div className="absolute -top-3 left-3 z-50 px-2 py-0.5 rounded-full bg-sky-500 text-black text-[9px] font-bold shadow-lg uppercase tracking-wider flex items-center gap-1 pointer-events-none">
             <Box className="w-2.5 h-2.5" />
@@ -445,7 +617,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         <div
           data-layer="component-wrapper"
           className={cn(
-            "transition-all duration-200 flex relative",
+            "transition-all duration-200 flex relative z-10",
             COMPONENT_WIDTH_MAP[effectiveComponentWidth],
             effectiveAlignX === "start"
               ? "mr-auto ml-0 justify-start"
@@ -456,7 +628,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
             isEditor &&
               isSelected &&
               (activeInspectorLayer === "child" || !activeInspectorLayer) &&
-              "outline-2 outline-dashed outline-[#F4B400] bg-[#F4B400]/[0.02] rounded-xl"
+              "outline-2 outline-dashed outline-[#F4B400] rounded-xl"
           )}
         >
           {isEditor && isSelected && (activeInspectorLayer === "child" || !activeInspectorLayer) && (

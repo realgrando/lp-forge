@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { BorderRadiusPreset, SurfaceStyle } from "@/types/site";
+import { BorderRadiusPreset, HeaderSurfaceType, SurfaceStyle } from "@/types/site";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -36,16 +36,35 @@ export function getRadiusClass(radius: BorderRadiusPreset = "md"): string {
 export function getSurfaceClasses(style: SurfaceStyle = "solid"): string {
   switch (style) {
     case "solid":
-      return "bg-[var(--site-surface)] border border-white/5 shadow-sm";
+      return "bg-zinc-950 shadow-md";
     case "glass":
-      return "bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.25)]";
+      return "bg-zinc-950/75 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.37)]";
     case "bordered":
-      return "bg-transparent border border-white/15 hover:border-white/30 transition-colors";
+      return "bg-zinc-950/40 backdrop-blur-md shadow-sm";
     case "3d_floating":
-      return "bg-[var(--site-surface)] border border-white/15 shadow-[0_8px_0_0_rgba(0,0,0,0.45),0_15px_30px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all";
+      return "bg-zinc-950 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(255,255,255,0.08)]";
     case "neon":
-      return "bg-black/60 backdrop-blur-md border border-[var(--site-accent)] shadow-[0_0_25px_-5px_var(--site-accent)]";
+      return "bg-zinc-950/90 backdrop-blur-xl shadow-[0_0_24px_-4px_var(--site-accent)]";
     default:
-      return "bg-[var(--site-surface)] border border-white/10";
+      return "bg-zinc-950 shadow-md";
+  }
+}
+
+export function getHeaderSurfaceClasses(surface: HeaderSurfaceType = "solid"): string {
+  switch (surface) {
+    case "transparent":
+      return "bg-transparent border-0 border-transparent shadow-none";
+    case "solid":
+      return "bg-zinc-950 shadow-md";
+    case "glass":
+      return "bg-zinc-950/75 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.37)]";
+    case "bordered":
+      return "bg-zinc-950/40 backdrop-blur-md shadow-sm";
+    case "3d_floating":
+      return "bg-zinc-950 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(255,255,255,0.08)]";
+    case "neon":
+      return "bg-zinc-950/90 backdrop-blur-xl shadow-[0_0_24px_-4px_var(--site-accent)]";
+    default:
+      return "bg-zinc-950 shadow-md";
   }
 }

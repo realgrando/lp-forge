@@ -220,17 +220,9 @@ for (const [typeKey, group] of Object.entries(BLOCK_LIBRARY)) {
 
         return (
           <div
-            className={`${blockStyle.customText ? "section-custom-text" : ""} ${
-              !blockStyle.customBg && !isHero && !isHeader
-                ? mergedData.layout?.bgStyle === "surface"
-                  ? "bg-bg-surface"
-                  : "bg-bg-main"
-                : ""
-            }`}
+            className={blockStyle.customText ? "section-custom-text" : ""}
             style={{
-              backgroundColor: isHeader
-                ? "transparent"
-                : blockStyle.customBg || "transparent",
+              backgroundColor: "transparent",
               color: blockStyle.customText || "inherit",
               position: "relative",
             }}

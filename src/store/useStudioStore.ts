@@ -29,20 +29,30 @@ function buildSectionInstance(
   forceContainer?: SectionLayout["containerWidth"]
 ): SectionNode {
   const def = getSectionDefinition(typeId)!;
+  const isHeader = typeId.startsWith("header.");
   const defLayout = def.defaultData.layout || {};
   return {
     id: generateId("sec"),
     type: def.id,
     layout: {
-      paddingY: defLayout.paddingY || "normal",
-      paddingInner: defLayout.paddingInner || "none",
-      paddingX: defLayout.paddingX || "normal",
+      containerWidth: forceContainer || defLayout.containerWidth || (isHeader ? "full" : "boxed"),
+      containerAlignX: defLayout.containerAlignX || "center",
+      containerAlignY: defLayout.containerAlignY || "center",
+      minHeight: defLayout.minHeight || "auto",
+      paddingY: defLayout.paddingY || (isHeader ? "none" : "normal"),
+      paddingX: defLayout.paddingX || (isHeader ? "none" : "normal"),
+      sticky: defLayout.sticky !== undefined ? defLayout.sticky : isHeader,
+      componentWidth: defLayout.componentWidth || (typeId === "header.capsule" ? "auto" : "full"),
+      direction: defLayout.direction || (isHeader ? "row" : "col"),
+      reverse: defLayout.reverse || false,
+      paddingInner: defLayout.paddingInner || (isHeader ? "normal" : "none"),
+      paddingInnerX: defLayout.paddingInnerX || (isHeader ? "spacious" : "normal"),
+      distribution: defLayout.distribution || (isHeader ? "between" : "center"),
+      alignItems: defLayout.alignItems || "center",
       gap: defLayout.gap || "normal",
-      direction: defLayout.direction || "col",
-      ...deepClone(defLayout),
-      containerWidth:
-        forceContainer || defLayout.containerWidth || "boxed",
+      contentMaxWidth: defLayout.contentMaxWidth || "full",
       hidden: false,
+      ...deepClone(defLayout),
     },
     styles: deepClone(def.defaultData.styles || {}),
     content: deepClone(def.defaultData.content),
@@ -118,6 +128,7 @@ interface StudioState {
   updateSectionContent: (id: string, key: string, value: any) => void;
   updateSectionLayout: (id: string, patch: Partial<SectionLayout>) => void;
   updateSectionStyles: (id: string, patch: Partial<SectionStyles>) => void;
+  resetSectionToDefault: (id: string) => void;
   toggleElementVisibility: (id: string, elementKey: string) => void;
   updateTypographyOverride: (
     id: string,
@@ -425,6 +436,30 @@ export const useStudioStore = create<StudioState>((set, get) => {
         const sec = draft.sections.find((s) => s.id === id);
         if (sec) {
           sec.styles = { ...sec.styles, ...patch };
+        }
+      });
+
+      set({
+        ...historyPatch,
+        document: nextDoc,
+      });
+    },
+
+    resetSectionToDefault: (id) => {
+      const state = get();
+      const sec = state.document.sections.find((s) => s.id === id);
+      if (!sec) return;
+      const def = getSectionDefinition(sec.type);
+      if (!def) return;
+
+      const historyPatch = pushHistory(state);
+      const defaultSec = buildSectionInstance(sec.type, state.document.theme);
+
+      const nextDoc = produce(state.document, (draft) => {
+        const target = draft.sections.find((s) => s.id === id);
+        if (target) {
+          target.layout = deepClone(defaultSec.layout);
+          target.styles = deepClone(defaultSec.styles);
         }
       });
 

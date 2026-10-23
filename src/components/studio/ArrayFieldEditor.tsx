@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { ColorFieldRow } from "./ui/ColorFieldRow";
 import { ModernToggle } from "./ui/ModernToggle";
+import { ImageUploadField } from "./ui/ImageUploadField";
 
 interface ArrayFieldEditorProps {
   field: FieldDefinition;
@@ -229,11 +230,23 @@ export const ArrayFieldEditor: React.FC<ArrayFieldEditorProps> = ({
                     {field.itemFields.map((subField) => {
                       const subVal = item[subField.key];
 
-                      if (
-                        subField.type === "text" ||
-                        subField.type === "url" ||
-                        subField.type === "image"
-                      ) {
+                      if (subField.type === "image") {
+                        return (
+                          <ImageUploadField
+                            key={subField.key}
+                            label={subField.label}
+                            value={subVal || ""}
+                            onChange={(url) =>
+                              handleUpdateItemField(idx, subField.key, url)
+                            }
+                            onReset={() =>
+                              handleUpdateItemField(idx, subField.key, "")
+                            }
+                          />
+                        );
+                      }
+
+                      if (subField.type === "text" || subField.type === "url") {
                         return (
                           <div key={subField.key} className="space-y-1.5">
                             <label className="text-[11px] font-semibold text-zinc-300 block">

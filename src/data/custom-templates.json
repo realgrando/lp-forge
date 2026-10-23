@@ -42,28 +42,36 @@
             "id": "sec_xjr8yk4nb86",
             "type": "header.classic",
             "layout": {
-              "paddingY": "none",
-              "paddingInner": "normal",
-              "paddingX": "normal",
               "containerWidth": "full",
-              "hidden": false,
-              "distribution": "around",
-              "gap": "normal",
-              "reverse": false,
+              "containerAlignX": "center",
+              "containerAlignY": "center",
+              "minHeight": "auto",
+              "paddingY": "none",
+              "paddingX": "none",
+              "sticky": true,
+              "componentWidth": "full",
               "direction": "row",
-              "sticky": false
+              "reverse": false,
+              "paddingInner": "normal",
+              "paddingInnerX": "spacious",
+              "distribution": "between",
+              "alignItems": "center",
+              "gap": "normal",
+              "contentMaxWidth": "full",
+              "hidden": false
             },
             "styles": {
               "surfaceVariant": "solid",
               "borderRadius": "none",
+              "borderWidth": "1",
               "ambientGlow": false,
+              "bgGradientEnabled": false,
               "hiddenElements": {
                 "brand": false,
                 "logoImageUrl": false,
                 "ctaButton": false,
                 "navLinks": false
-              },
-              "bgGradientEnabled": false
+              }
             },
             "content": {
               "brandName": "NIVIX",

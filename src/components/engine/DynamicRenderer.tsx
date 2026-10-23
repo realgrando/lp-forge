@@ -38,6 +38,11 @@ export const DynamicRenderer: React.FC<DynamicRendererProps> = ({
 }) => {
   const { theme, sections } = document;
 
+  const headerSection = sections.find((s) => s.type.startsWith("header."));
+  const headerOverlayEnabled = headerSection
+    ? headerSection.layout?.headerOverlay !== false
+    : false;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const root = window.document.documentElement;
@@ -124,6 +129,9 @@ export const DynamicRenderer: React.FC<DynamicRendererProps> = ({
           }
 
           const { Component } = def;
+          const isFirstAfterHeader = Boolean(
+            idx === 1 && sections[0]?.type.startsWith("header.")
+          );
 
           return (
             <SectionWrapper
@@ -136,6 +144,8 @@ export const DynamicRenderer: React.FC<DynamicRendererProps> = ({
               isSelected={selectedSectionId === section.id}
               isFirst={idx === 0}
               isLast={idx === sections.length - 1}
+              isFirstAfterHeader={isFirstAfterHeader}
+              headerOverlayEnabled={headerOverlayEnabled}
               onSelect={() => onSelectSection?.(section.id)}
               onMoveUp={() => onMoveSection?.(section.id, "up")}
               onMoveDown={() => onMoveSection?.(section.id, "down")}

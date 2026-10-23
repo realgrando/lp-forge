@@ -22,10 +22,13 @@ import { AccordionSection } from "@/components/studio/ui/AccordionSection";
 import { SegmentedControl } from "@/components/studio/ui/SegmentedControl";
 import { ColorFieldRow } from "@/components/studio/ui/ColorFieldRow";
 import { ModernToggle } from "@/components/studio/ui/ModernToggle";
+import { ImageUploadField } from "@/components/studio/ui/ImageUploadField";
 import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import {
   BackgroundPattern,
+  BorderPosition,
   BorderRadiusPreset,
+  CardHoverEffect,
   ComponentWidth,
   ContainerAlignX,
   ContainerAlignY,
@@ -36,8 +39,14 @@ import {
   LayoutDirection,
   LayoutDistribution,
   LayoutGap,
+  HeaderScrollBehavior,
+  HeaderScrollVisibility,
+  HeaderScrollSurface,
+  HeaderScrollShape,
+  HeaderSurfaceType,
   PaddingScale,
   SectionMinHeight,
+  SurfaceBlur,
   SurfaceStyle,
   TextHighlightStyle,
   TextMaxWidth,
@@ -82,6 +91,12 @@ import {
   Box,
   Image as ImageIcon,
   Info,
+  RotateCcw,
+  Pin,
+  Droplets,
+  Shield,
+  Compass,
+  ArrowDown,
 } from "lucide-react";
 
 export default function StudioPage() {
@@ -110,6 +125,7 @@ export default function StudioPage() {
     updateSectionContent,
     updateSectionLayout,
     updateSectionStyles,
+    resetSectionToDefault,
     toggleElementVisibility,
     updateTypographyOverride,
     applyThemePreset,
@@ -870,9 +886,20 @@ export default function StudioPage() {
                   <span className="text-[10px] font-mono uppercase tracking-widest text-[#F4B400]">
                     {selectedDefinition.category}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-500">
-                    {selectedSection.id}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => resetSectionToDefault(selectedSection.id)}
+                      title="Restaurar layout e acabamentos para o padrão original de fábrica"
+                      className="px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 text-[10px] font-medium text-zinc-300 hover:text-white transition-colors flex items-center gap-1 border border-white/5 hover:border-white/20"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5 text-[#F4B400]" />
+                      <span>Restaurar Padrão</span>
+                    </button>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      {selectedSection.id}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="text-sm font-bold text-white mt-0.5">
                   {selectedDefinition.name}
@@ -1003,11 +1030,81 @@ export default function StudioPage() {
                                 selectedSection.styles.hiddenElements?.[optKey]
                               );
 
-                              // Text / URL / Image
+                              // Image Field (com Upload, Drag & Drop e URL)
+                              if (field.type === "image") {
+                                return (
+                                  <div
+                                    key={field.key}
+                                    className={cn(
+                                      "space-y-1.5 p-3 rounded-xl border transition-all",
+                                      !isElementHidden
+                                        ? "bg-zinc-950/70 border-white/10"
+                                        : "bg-zinc-950/30 border-white/5 opacity-50"
+                                    )}
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <label className="text-xs font-semibold text-zinc-200">
+                                        {field.label}
+                                      </label>
+                                      {field.optionalKey && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            toggleElementVisibility(
+                                              selectedSection.id,
+                                              optKey
+                                            )
+                                          }
+                                          title={
+                                            isElementHidden
+                                              ? "Exibir este elemento"
+                                              : "Ocultar este elemento"
+                                          }
+                                          className={cn(
+                                            "w-6 h-6 rounded-lg border flex items-center justify-center transition-colors",
+                                            !isElementHidden
+                                              ? "bg-[#F4B400]/15 border-[#F4B400]/40 text-[#F4B400]"
+                                              : "bg-zinc-900 border-white/10 text-zinc-500"
+                                          )}
+                                        >
+                                          {!isElementHidden ? (
+                                            <Eye className="w-3 h-3" />
+                                          ) : (
+                                            <EyeOff className="w-3 h-3" />
+                                          )}
+                                        </button>
+                                      )}
+                                    </div>
+
+                                    {!isElementHidden && (
+                                      <ImageUploadField
+                                        label=""
+                                        value={val || ""}
+                                        placeholder={field.placeholder || "https://... ou solte o arquivo"}
+                                        onChange={(newUrl) =>
+                                          updateSectionContent(
+                                            selectedSection.id,
+                                            field.key,
+                                            newUrl
+                                          )
+                                        }
+                                        onReset={() =>
+                                          updateSectionContent(
+                                            selectedSection.id,
+                                            field.key,
+                                            ""
+                                          )
+                                        }
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              }
+
+                              // Text / URL
                               if (
                                 field.type === "text" ||
-                                field.type === "url" ||
-                                field.type === "image"
+                                field.type === "url"
                               ) {
                                 return (
                                   <div
@@ -1295,21 +1392,382 @@ export default function StudioPage() {
                             ]}
                           />
 
-                          {/* Toggle Sticky para Headers */}
-                          {selectedSection.type.startsWith("header.") && (
-                            <div className="pt-1">
-                              <ModernToggle
-                                label="Fixar no Topo (Sticky Header)"
-                                description="Mantém a barra visível ao rolar a página"
-                                checked={Boolean(selectedSection.layout.sticky)}
-                                onChange={(stk) =>
-                                  updateSectionLayout(selectedSection.id, {
-                                    sticky: stk,
-                                  })
-                                }
-                              />
-                            </div>
-                          )}
+                          {/* Comportamento da Barra ao Rolar (Modular & Combinável) */}
+                          {selectedSection.type.startsWith("header.") && (() => {
+                            const currentVisibility: HeaderScrollVisibility =
+                              selectedSection.layout.scrollVisibility ||
+                              (selectedSection.layout.headerScrollBehavior === "static" ||
+                              selectedSection.layout.sticky === false
+                                ? "static"
+                                : "fixed");
+
+                            const currentInitialSurface: HeaderSurfaceType =
+                              selectedSection.layout.headerSurfaceInitial ||
+                              (selectedSection.layout.scrollSurface === "transparent_to_glass" ||
+                              selectedSection.layout.scrollSurface === "transparent_to_solid"
+                                ? "transparent"
+                                : (selectedSection.styles.surfaceVariant as HeaderSurfaceType) ||
+                                  "solid");
+
+                            const currentScrolledSurface: HeaderSurfaceType =
+                              selectedSection.layout.headerSurfaceScrolled ||
+                              (selectedSection.layout.scrollSurface === "transparent_to_glass"
+                                ? "glass"
+                                : selectedSection.layout.scrollSurface === "transparent_to_solid" ||
+                                  selectedSection.layout.scrollSurface === "glass_to_solid"
+                                ? "solid"
+                                : currentInitialSurface);
+
+                            const currentShape: HeaderScrollShape =
+                              selectedSection.layout.scrollShape === "shrink_slim"
+                                ? "shrink_slim"
+                                : "keep";
+
+                            const isOverlayHero = selectedSection.layout.headerOverlay !== false;
+
+                            const SURFACE_OPTIONS: {
+                              id: HeaderSurfaceType;
+                              label: string;
+                              desc: string;
+                              icon: React.ReactNode;
+                            }[] = [
+                              {
+                                id: "transparent",
+                                label: "Transparente",
+                                desc: "100% invisível, mostra o fundo do hero",
+                                icon: <Eye className="w-3 h-3 text-zinc-400" />,
+                              },
+                              {
+                                id: "solid",
+                                label: "Sólido (100% Opaco)",
+                                desc: "Fundo preto denso sem vazamento de luz",
+                                icon: <Shield className="w-3 h-3 text-emerald-400" />,
+                              },
+                              {
+                                id: "glass",
+                                label: "Vidro Fosco (Glass)",
+                                desc: "Efeito translúcido com desfoque denso",
+                                icon: <Droplets className="w-3 h-3 text-sky-400" />,
+                              },
+                              {
+                                id: "bordered",
+                                label: "Borda Minimal",
+                                desc: "Fundo ultra sutil destacando contornos",
+                                icon: <Layers className="w-3 h-3 text-zinc-300" />,
+                              },
+                              {
+                                id: "3d_floating",
+                                label: "Elevado 3D",
+                                desc: "Sólido com sombra tridimensional",
+                                icon: <Box className="w-3 h-3 text-amber-400" />,
+                              },
+                              {
+                                id: "neon",
+                                label: "Neon Glow",
+                                desc: "Contorno luminoso na cor de destaque",
+                                icon: <Sparkles className="w-3 h-3 text-purple-400" />,
+                              },
+                            ];
+
+                            return (
+                              <div className="space-y-3 pt-3 border-t border-white/5">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-[#F4B400]" />
+                                    Comportamento ao Rolar (Scroll)
+                                  </label>
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#F4B400]/10 text-[#F4B400] font-mono border border-[#F4B400]/20">
+                                    Modular & Combinável
+                                  </span>
+                                </div>
+
+                                {/* 0. Sobreposição Hero / Fundo Contínuo */}
+                                <ModernToggle
+                                  label="Fundo Contínuo (Sobrepor ao Hero)"
+                                  description="O fundo e luz do Hero sobem atrás do header sem cortar conteúdo"
+                                  checked={isOverlayHero}
+                                  onChange={(checked) =>
+                                    updateSectionLayout(selectedSection.id, {
+                                      headerOverlay: checked,
+                                    })
+                                  }
+                                />
+
+                                {/* 1. Fixação & Visibilidade */}
+                                <div className="space-y-1.5 bg-zinc-950/60 p-2.5 rounded-xl border border-white/5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1">
+                                      <Pin className="w-3 h-3 text-zinc-400" />
+                                      1. Fixação & Visibilidade
+                                    </span>
+                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                      {currentVisibility === "fixed"
+                                        ? "Sempre Fixo"
+                                        : currentVisibility === "auto_hide"
+                                        ? "Auto-Hide (Suave)"
+                                        : "Rola Junto"}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-1">
+                                    {[
+                                      {
+                                        id: "fixed" as const,
+                                        label: "Sempre Fixo",
+                                        desc: "Fixado no topo",
+                                        icon: <Pin className="w-3 h-3 text-[#F4B400]" />,
+                                      },
+                                      {
+                                        id: "auto_hide" as const,
+                                        label: "Auto-Hide",
+                                        desc: "Some ao descer / surge ao subir",
+                                        icon: <EyeOff className="w-3 h-3 text-sky-400" />,
+                                      },
+                                      {
+                                        id: "static" as const,
+                                        label: "Estático",
+                                        desc: "Acompanha página",
+                                        icon: <ArrowDown className="w-3 h-3 text-zinc-400" />,
+                                      },
+                                    ].map((item) => {
+                                      const isSel = currentVisibility === item.id;
+                                      return (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          onClick={() =>
+                                            updateSectionLayout(selectedSection.id, {
+                                              scrollVisibility: item.id,
+                                              sticky: item.id !== "static",
+                                            })
+                                          }
+                                          className={cn(
+                                            "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                            isSel
+                                              ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm"
+                                              : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                          )}
+                                        >
+                                          <div className="flex items-center justify-between w-full">
+                                            <span
+                                              className={cn(
+                                                "font-medium text-[11px] flex items-center gap-1",
+                                                isSel ? "text-[#F4B400]" : "text-zinc-200"
+                                              )}
+                                            >
+                                              {item.icon}
+                                              {item.label}
+                                            </span>
+                                            {isSel && (
+                                              <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
+                                            )}
+                                          </div>
+                                          <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                            {item.desc}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* 2. Superfície em 2 Estados (Simultâneos e Claros) */}
+                                <div className="space-y-3 bg-zinc-950/60 p-3 rounded-xl border border-white/5">
+                                  <div className="flex items-center justify-between pb-1 border-b border-white/5">
+                                    <span className="text-[11px] font-semibold text-zinc-200 flex items-center gap-1.5">
+                                      <Droplets className="w-3.5 h-3.5 text-sky-400" />
+                                      2. Superfície em 2 Estados
+                                    </span>
+                                    <div className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-900 border border-white/10">
+                                      <span className="text-[#F4B400] font-semibold">
+                                        {SURFACE_OPTIONS.find((o) => o.id === currentInitialSurface)?.label.split(" ")[0] || "Transparente"}
+                                      </span>
+                                      <span className="text-zinc-500">→</span>
+                                      <span className="text-sky-400 font-semibold">
+                                        {SURFACE_OPTIONS.find((o) => o.id === currentScrolledSurface)?.label.split(" ")[0] || "Sólido"}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Estado 1: No Topo (Inicial) */}
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-semibold text-[#F4B400] flex items-center gap-1 tracking-wide uppercase">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#F4B400]"></span>
+                                        Estado 1: No Topo (Inicial)
+                                      </span>
+                                      <span className="text-[9px] text-zinc-400 font-medium">
+                                        {SURFACE_OPTIONS.find((o) => o.id === currentInitialSurface)?.label}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                      {SURFACE_OPTIONS.map((item) => {
+                                        const isSelected = currentInitialSurface === item.id;
+                                        return (
+                                          <button
+                                            key={`initial-${item.id}`}
+                                            type="button"
+                                            onClick={() => {
+                                              updateSectionLayout(selectedSection.id, {
+                                                headerSurfaceInitial: item.id,
+                                              });
+                                              if (item.id !== "transparent") {
+                                                updateSectionStyles(selectedSection.id, {
+                                                  surfaceVariant: item.id as SurfaceStyle,
+                                                });
+                                              }
+                                            }}
+                                            className={cn(
+                                              "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                              isSelected
+                                                ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm ring-1 ring-[#F4B400]/30"
+                                                : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                            )}
+                                          >
+                                            <div className="flex items-center justify-between w-full">
+                                              <span
+                                                className={cn(
+                                                  "font-medium text-[11px] flex items-center gap-1",
+                                                  isSelected ? "text-[#F4B400]" : "text-zinc-200"
+                                                )}
+                                              >
+                                                {item.icon}
+                                                {item.label}
+                                              </span>
+                                              {isSelected && (
+                                                <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
+                                              )}
+                                            </div>
+                                            <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                              {item.desc}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  {/* Estado 2: Ao Rolar (Scrolled) */}
+                                  <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-semibold text-sky-400 flex items-center gap-1 tracking-wide uppercase">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                                        Estado 2: Ao Rolar (Scrolled)
+                                      </span>
+                                      <span className="text-[9px] text-zinc-400 font-medium">
+                                        {SURFACE_OPTIONS.find((o) => o.id === currentScrolledSurface)?.label}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                      {SURFACE_OPTIONS.map((item) => {
+                                        const isSelected = currentScrolledSurface === item.id;
+                                        return (
+                                          <button
+                                            key={`scrolled-${item.id}`}
+                                            type="button"
+                                            onClick={() => {
+                                              updateSectionLayout(selectedSection.id, {
+                                                headerSurfaceScrolled: item.id,
+                                              });
+                                            }}
+                                            className={cn(
+                                              "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                              isSelected
+                                                ? "bg-sky-500/15 border-sky-400 text-white shadow-sm ring-1 ring-sky-400/30"
+                                                : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                            )}
+                                          >
+                                            <div className="flex items-center justify-between w-full">
+                                              <span
+                                                className={cn(
+                                                  "font-medium text-[11px] flex items-center gap-1",
+                                                  isSelected ? "text-sky-400" : "text-zinc-200"
+                                                )}
+                                              >
+                                                {item.icon}
+                                                {item.label}
+                                              </span>
+                                              {isSelected && (
+                                                <Check className="w-3 h-3 text-sky-400 shrink-0" />
+                                              )}
+                                            </div>
+                                            <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                              {item.desc}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* 3. Altura ao Rolar (Slim) */}
+                                <div className="space-y-1.5 bg-zinc-950/60 p-2.5 rounded-xl border border-white/5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1">
+                                      <Minimize2 className="w-3 h-3 text-emerald-400" />
+                                      3. Altura ao Rolar (Slim)
+                                    </span>
+                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                      {currentShape === "shrink_slim" ? "Slim Ativo" : "Altura Fixa"}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    {[
+                                      {
+                                        id: "keep" as const,
+                                        label: "Manter Altura",
+                                        desc: "Mantém dimensões originais intactas ao rolar",
+                                        icon: <Maximize2 className="w-3 h-3 text-zinc-400" />,
+                                      },
+                                      {
+                                        id: "shrink_slim" as const,
+                                        label: "Encolher ao Rolar (Slim)",
+                                        desc: "Encolhe ao descer e expande de volta ao subir",
+                                        icon: <Minimize2 className="w-3 h-3 text-emerald-400" />,
+                                      },
+                                    ].map((item) => {
+                                      const isSel = currentShape === item.id;
+                                      return (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          onClick={() =>
+                                            updateSectionLayout(selectedSection.id, {
+                                              scrollShape: item.id,
+                                            })
+                                          }
+                                          className={cn(
+                                            "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                            isSel
+                                              ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm ring-1 ring-[#F4B400]/30"
+                                              : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                          )}
+                                        >
+                                          <div className="flex items-center justify-between w-full">
+                                            <span
+                                              className={cn(
+                                                "font-medium text-[11px] flex items-center gap-1",
+                                                isSel ? "text-[#F4B400]" : "text-zinc-200"
+                                              )}
+                                            >
+                                              {item.icon}
+                                              {item.label}
+                                            </span>
+                                            {isSel && (
+                                              <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
+                                            )}
+                                          </div>
+                                          <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                            {item.desc}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Altura da Seção (Min Height) */}
@@ -1585,6 +2043,265 @@ export default function StudioPage() {
                             Distância mínima de segurança entre o conteúdo e as bordas da tela (evita encostar nas laterais do monitor e celular).
                           </span>
                         </div>
+
+                        {/* Fundo, Cores & Divisores do Container Pai */}
+                        <div className="space-y-3 pt-3 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                              <Palette className="w-3.5 h-3.5 text-[#F4B400]" />
+                              Fundo & Divisores do Pai (Seção)
+                            </label>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              Container Externo
+                            </span>
+                          </div>
+
+                          {/* Cores da Seção */}
+                          <div className="space-y-2.5">
+                            <ColorFieldRow
+                              label="Cor de Fundo da Seção"
+                              description="Fundo de tela do container pai"
+                              value={selectedSection.styles.customBg}
+                              defaultValue={siteDoc.theme.palette.background}
+                              onChange={(hex) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  customBg: hex,
+                                })
+                              }
+                              onReset={() =>
+                                updateSectionStyles(selectedSection.id, {
+                                  customBg: undefined,
+                                })
+                              }
+                            />
+
+                            <ColorFieldRow
+                              label="Texto Principal da Seção"
+                              description="Cor dos títulos e textos deste bloco"
+                              value={selectedSection.styles.customText}
+                              defaultValue={siteDoc.theme.palette.foreground}
+                              onChange={(hex) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  customText: hex,
+                                })
+                              }
+                              onReset={() =>
+                                updateSectionStyles(selectedSection.id, {
+                                  customText: undefined,
+                                })
+                              }
+                            />
+
+                            <ColorFieldRow
+                              label="Cor de Destaque (Accent)"
+                              description="Realces e botões deste bloco"
+                              value={selectedSection.styles.customAccent}
+                              defaultValue={siteDoc.theme.palette.accent}
+                              onChange={(hex) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  customAccent: hex,
+                                })
+                              }
+                              onReset={() =>
+                                updateSectionStyles(selectedSection.id, {
+                                  customAccent: undefined,
+                                })
+                              }
+                            />
+                          </div>
+
+                          {/* Padrão / Textura de Fundo do Pai */}
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Padrão de Fundo (Pattern Overlay)
+                              </label>
+                              <span className="text-[10px] text-zinc-500">
+                                Malha sutil do pai
+                              </span>
+                            </div>
+                            <SegmentedControl<BackgroundPattern>
+                              value={selectedSection.styles.bgPattern || "none"}
+                              onChange={(pat) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  bgPattern: pat,
+                                })
+                              }
+                              columns={4}
+                              size="sm"
+                              options={[
+                                { value: "none", label: "Nenhum" },
+                                { value: "grid", label: "Grade" },
+                                { value: "dots", label: "Pontos" },
+                                { value: "noise", label: "Ruído" },
+                              ]}
+                            />
+                          </div>
+
+                          {/* Gradiente de Fundo do Pai */}
+                          <div className="space-y-3 pt-2 border-t border-white/5">
+                            <ModernToggle
+                              label="Gradiente de Fundo do Pai"
+                              description="Fundo degradê estilizado no container da seção"
+                              checked={Boolean(selectedSection.styles.bgGradientEnabled)}
+                              onChange={(chk) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  bgGradientEnabled: chk,
+                                })
+                              }
+                            />
+
+                            {selectedSection.styles.bgGradientEnabled && (
+                              <div className="space-y-3 pl-2 border-l border-white/10 mt-2">
+                                <div className="space-y-1.5">
+                                  <label className="text-xs font-semibold text-zinc-300 block">
+                                    Direção do Gradiente
+                                  </label>
+                                  <SegmentedControl<GradientDirection>
+                                    value={selectedSection.styles.bgGradientDirection || "to-b"}
+                                    onChange={(dir) =>
+                                      updateSectionStyles(selectedSection.id, {
+                                        bgGradientDirection: dir,
+                                      })
+                                    }
+                                    columns={4}
+                                    size="sm"
+                                    options={[
+                                      { value: "to-b", label: "Vertical ↓" },
+                                      { value: "to-br", label: "Diagonal ↘" },
+                                      { value: "to-r", label: "Horizontal →" },
+                                      { value: "radial", label: "Radial ⦿" },
+                                    ]}
+                                  />
+                                </div>
+
+                                <ColorFieldRow
+                                  label="Cor Inicial"
+                                  description="Ponto de partida do degradê"
+                                  value={selectedSection.styles.bgGradientFrom}
+                                  defaultValue="#09090b"
+                                  onChange={(hex) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      bgGradientFrom: hex,
+                                    })
+                                  }
+                                  onReset={() =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      bgGradientFrom: undefined,
+                                    })
+                                  }
+                                />
+
+                                <ColorFieldRow
+                                  label="Cor Final"
+                                  description="Ponto de chegada do degradê"
+                                  value={selectedSection.styles.bgGradientTo}
+                                  defaultValue="#18181b"
+                                  onChange={(hex) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      bgGradientTo: hex,
+                                    })
+                                  }
+                                  onReset={() =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      bgGradientTo: undefined,
+                                    })
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Imagem de Fundo do Pai com Upload / Drag & Drop */}
+                          <div className="space-y-3 pt-2 border-t border-white/5">
+                            <ImageUploadField
+                              label="Imagem de Fundo da Seção (Pai)"
+                              description="Foto de fundo em tela cheia"
+                              value={selectedSection.styles.bgImage || ""}
+                              onChange={(url) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  bgImage: url,
+                                })
+                              }
+                              onReset={() =>
+                                updateSectionStyles(selectedSection.id, {
+                                  bgImage: undefined,
+                                })
+                              }
+                            />
+
+                            {selectedSection.styles.bgImage && (
+                              <div className="space-y-1.5 pl-2 border-l border-white/10">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-semibold text-zinc-300 block">
+                                    Opacidade da Máscara Escura
+                                  </label>
+                                  <span className="text-[10px] text-[#F4B400] font-semibold">
+                                    {selectedSection.styles.bgOverlayOpacity ?? 70}%
+                                  </span>
+                                </div>
+                                <SegmentedControl<string>
+                                  value={String(selectedSection.styles.bgOverlayOpacity ?? 70)}
+                                  onChange={(val) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      bgOverlayOpacity: Number(val),
+                                    })
+                                  }
+                                  columns={4}
+                                  size="sm"
+                                  options={[
+                                    { value: "40", label: "40%" },
+                                    { value: "60", label: "60%" },
+                                    { value: "80", label: "80%" },
+                                    { value: "95", label: "95%" },
+                                  ]}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Divisores de Seção (Apenas no Pai) */}
+                          <div className="space-y-2.5 pt-2 border-t border-white/5">
+                            <label className="text-xs font-semibold text-zinc-300 block">
+                              Divisores da Seção
+                            </label>
+                            <ModernToggle
+                              label="Borda Superior (Top Divider)"
+                              description="Linha divisória sutil no topo do bloco"
+                              checked={Boolean(selectedSection.styles.borderTop)}
+                              onChange={(chk) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  borderTop: chk,
+                                })
+                              }
+                            />
+
+                            <ModernToggle
+                              label="Borda Inferior (Bottom Divider)"
+                              description="Linha divisória sutil na base do bloco"
+                              checked={Boolean(selectedSection.styles.borderBottom)}
+                              onChange={(chk) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  borderBottom: chk,
+                                })
+                              }
+                            />
+
+                            {(selectedSection.styles.borderTop ||
+                              selectedSection.styles.borderBottom) && (
+                              <ModernToggle
+                                label="Linha com Luz de Gradiente (Glow Divider)"
+                                description="Linha central com brilho gradiente na cor do tema"
+                                checked={Boolean(selectedSection.styles.borderGlow)}
+                                onChange={(chk) =>
+                                  updateSectionStyles(selectedSection.id, {
+                                    borderGlow: chk,
+                                  })
+                                }
+                              />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </AccordionSection>
                   </div>
@@ -1628,12 +2345,12 @@ export default function StudioPage() {
                               options={[
                                 { value: "full", label: "Total", icon: <Maximize2 className="w-3 h-3" /> },
                                 { value: "boxed", label: "Bloco", icon: <LayoutGrid className="w-3 h-3" /> },
-                                { value: "narrow", label: "Estreito", icon: <Columns2 className="w-3 h-3" /> },
                                 { value: "auto", label: "Cápsula", icon: <Box className="w-3 h-3" /> },
+                                { value: "narrow", label: "Estreito", icon: <Columns2 className="w-3 h-3" /> },
                               ]}
                             />
                             <span className="text-[10px] text-zinc-500 block">
-                              Total (100% do pai) &gt; Bloco (~1024px) &gt; Estreito (~768px) &gt; Cápsula (auto/justo ao conteúdo).
+                              Total (100% do pai) &gt; Bloco (~1024px) &gt; Cápsula (justo ao conteúdo) &gt; Estreito (~768px).
                             </span>
                           </div>
 
@@ -1817,23 +2534,29 @@ export default function StudioPage() {
 
                         {/* Acabamento da Superfície (Card) */}
                         <div className="space-y-2 pt-2 border-t border-white/5">
-                          <label className="text-xs font-semibold text-zinc-300 block">
-                            Acabamento da Superfície (Card)
-                          </label>
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-zinc-300 block">
+                              Acabamento da Superfície (Card)
+                            </label>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              Estilo visual
+                            </span>
+                          </div>
                           <div className="grid grid-cols-2 gap-2">
                             {(
                               [
-                                { id: "solid", label: "Sólido" },
-                                { id: "glass", label: "Glassmorphism" },
-                                { id: "bordered", label: "Borda Fina" },
-                                { id: "3d_floating", label: "3D Flutuante" },
-                                { id: "neon", label: "Neon Glow" },
-                              ] as { id: SurfaceStyle; label: string }[]
+                                { id: "solid", label: "Sólido", desc: "Fundo opaco clássico" },
+                                { id: "glass", label: "Glassmorphism", desc: "Vidro fosco escuro" },
+                                { id: "bordered", label: "Borda Fina", desc: "Minimalista vazado" },
+                                { id: "3d_floating", label: "3D Flutuante", desc: "Sombra e elevação" },
+                                { id: "neon", label: "Neon Glow", desc: "Borda com brilho neon" },
+                              ] as { id: SurfaceStyle; label: string; desc: string }[]
                             ).map((surf) => {
                               const current =
                                 selectedSection.styles.surfaceVariant ||
                                 siteDoc.theme.tokens?.surfaceStyle ||
                                 "glass";
+                              const isCurrent = current === surf.id;
                               return (
                                 <button
                                   key={surf.id}
@@ -1844,16 +2567,23 @@ export default function StudioPage() {
                                     })
                                   }
                                   className={cn(
-                                    "px-3 py-2 rounded-xl text-xs font-medium border text-left flex items-center justify-between transition-all",
-                                    current === surf.id
-                                      ? "bg-[#F4B400]/15 border-[#F4B400] text-[#F4B400]"
-                                      : "bg-zinc-950 border-white/5 text-zinc-400 hover:text-white"
+                                    "p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all group",
+                                    isCurrent
+                                      ? "bg-[#F4B400]/15 border-[#F4B400] text-[#F4B400] shadow-sm"
+                                      : "bg-zinc-950 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
                                   )}
                                 >
-                                  <span>{surf.label}</span>
-                                  {current === surf.id && (
-                                    <Check className="w-3.5 h-3.5" />
-                                  )}
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className={cn("text-xs font-semibold", isCurrent ? "text-[#F4B400]" : "text-zinc-200")}>
+                                      {surf.label}
+                                    </span>
+                                    {isCurrent && (
+                                      <Check className="w-3.5 h-3.5 text-[#F4B400]" />
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] text-zinc-500 mt-0.5 leading-tight">
+                                    {surf.desc}
+                                  </span>
                                 </button>
                               );
                             })}
@@ -1889,62 +2619,334 @@ export default function StudioPage() {
                         </div>
 
                         {/* Espessura da Borda */}
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-zinc-300 block">
-                            Espessura da Borda
-                          </label>
-                          <SegmentedControl<"0" | "1" | "2">
+                        <div className="space-y-2 pt-2 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-zinc-300 block">
+                              Espessura da Borda
+                            </label>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              {selectedSection.styles.borderWidth === "0"
+                                ? "Sem borda (0px)"
+                                : `${selectedSection.styles.borderWidth || "1"}px`}
+                            </span>
+                          </div>
+                          <SegmentedControl<"0" | "1" | "2" | "3" | "4">
                             value={(selectedSection.styles.borderWidth as any) || "1"}
                             onChange={(bw) =>
                               updateSectionStyles(selectedSection.id, {
                                 borderWidth: bw,
                               })
                             }
-                            columns={3}
+                            columns={5}
                             size="sm"
                             options={[
                               { value: "0", label: "0px" },
                               { value: "1", label: "1px" },
                               { value: "2", label: "2px" },
+                              { value: "3", label: "3px" },
+                              { value: "4", label: "4px" },
+                            ]}
+                          />
+
+                          {selectedSection.styles.borderWidth === "0" ? (
+                            <div className="p-2 rounded-lg bg-zinc-950/60 border border-white/5 flex items-center gap-1.5 text-[11px] text-emerald-400">
+                              <Check className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                              <span>Borda desativada: superfícies 100% livres de contornos e linhas.</span>
+                            </div>
+                          ) : (
+                            <div className="space-y-3 pt-1">
+                              {/* Posição da Borda */}
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-[11px] font-medium text-zinc-300">
+                                    Posição da Borda
+                                  </label>
+                                  <span className="text-[10px] text-zinc-500 font-mono">
+                                    {selectedSection.styles.borderPosition === "bottom"
+                                      ? "Apenas Inferior"
+                                      : selectedSection.styles.borderPosition === "top_bottom"
+                                      ? "Superior & Inferior"
+                                      : "Contorno Completo"}
+                                  </span>
+                                </div>
+                                <SegmentedControl<BorderPosition>
+                                  value={
+                                    selectedSection.styles.borderPosition ||
+                                    (selectedSection.type.startsWith("header.") ? "bottom" : "all")
+                                  }
+                                  onChange={(pos) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      borderPosition: pos,
+                                    })
+                                  }
+                                  columns={3}
+                                  size="sm"
+                                  options={[
+                                    { value: "all", label: "Completa" },
+                                    { value: "bottom", label: "Inferior (B)" },
+                                    { value: "top_bottom", label: "Sup / Inf" },
+                                  ]}
+                                />
+                              </div>
+
+                              {/* Cor e Opacidade Unificadas da Borda */}
+                              <ColorFieldRow
+                                label="Cor & Opacidade da Borda"
+                                description="Tonalidade e transparência do contorno do card/header"
+                                value={selectedSection.styles.borderColor}
+                                defaultValue={effectiveAccentColor}
+                                onChange={(hex) =>
+                                  updateSectionStyles(selectedSection.id, {
+                                    borderColor: hex,
+                                  })
+                                }
+                                onReset={() =>
+                                  updateSectionStyles(selectedSection.id, {
+                                    borderColor: undefined,
+                                  })
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Fundo do Componente Filho (Superfície / Card) */}
+                        <div className="space-y-3 pt-2 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-zinc-300 block">
+                              Fundo da Superfície (Filho)
+                            </label>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              Card / Bloco
+                            </span>
+                          </div>
+
+                          {/* Cor e Opacidade Unificadas da Superfície */}
+                          <ColorFieldRow
+                            label="Fundo da Superfície (Card)"
+                            description="Tonalidade e transparência da superfície do filho"
+                            value={selectedSection.styles.customSurface}
+                            defaultValue={siteDoc.theme.palette.surface}
+                            onChange={(hex) =>
+                              updateSectionStyles(selectedSection.id, {
+                                customSurface: hex,
+                              })
+                            }
+                            onReset={() =>
+                              updateSectionStyles(selectedSection.id, {
+                                customSurface: undefined,
+                              })
+                            }
+                          />
+
+                          {/* Padrão / Textura do Filho */}
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Textura do Card (Pattern)
+                              </label>
+                              <span className="text-[10px] text-zinc-500">
+                                Malha sutil no filho
+                              </span>
+                            </div>
+                            <SegmentedControl<BackgroundPattern>
+                              value={selectedSection.styles.cardPattern || "none"}
+                              onChange={(pat) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  cardPattern: pat,
+                                })
+                              }
+                              columns={4}
+                              size="sm"
+                              options={[
+                                { value: "none", label: "Nenhum" },
+                                { value: "grid", label: "Grade" },
+                                { value: "dots", label: "Pontos" },
+                                { value: "noise", label: "Ruído" },
+                              ]}
+                            />
+                          </div>
+
+                          {/* Gradiente no Card do Filho */}
+                          <div className="space-y-3 pt-2 border-t border-white/5">
+                            <ModernToggle
+                              label="Gradiente no Card (Filho)"
+                              description="Degradê estilizado aplicado dentro do componente filho"
+                              checked={Boolean(selectedSection.styles.cardGradientEnabled)}
+                              onChange={(chk) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  cardGradientEnabled: chk,
+                                })
+                              }
+                            />
+
+                            {selectedSection.styles.cardGradientEnabled && (
+                              <div className="space-y-3 pl-2 border-l border-white/10 mt-2">
+                                <div className="space-y-1.5">
+                                  <label className="text-xs font-semibold text-zinc-300 block">
+                                    Direção do Gradiente no Card
+                                  </label>
+                                  <SegmentedControl<GradientDirection>
+                                    value={selectedSection.styles.cardGradientDirection || "to-b"}
+                                    onChange={(dir) =>
+                                      updateSectionStyles(selectedSection.id, {
+                                        cardGradientDirection: dir,
+                                      })
+                                    }
+                                    columns={4}
+                                    size="sm"
+                                    options={[
+                                      { value: "to-b", label: "Vertical ↓" },
+                                      { value: "to-br", label: "Diagonal ↘" },
+                                      { value: "to-r", label: "Horizontal →" },
+                                      { value: "radial", label: "Radial ⦿" },
+                                    ]}
+                                  />
+                                </div>
+
+                                <ColorFieldRow
+                                  label="Cor Inicial do Card"
+                                  description="Ponto de partida do degradê do filho"
+                                  value={selectedSection.styles.cardGradientFrom}
+                                  defaultValue="#09090b"
+                                  onChange={(hex) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      cardGradientFrom: hex,
+                                    })
+                                  }
+                                  onReset={() =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      cardGradientFrom: undefined,
+                                    })
+                                  }
+                                />
+
+                                <ColorFieldRow
+                                  label="Cor Final do Card"
+                                  description="Ponto de chegada do degradê do filho"
+                                  value={selectedSection.styles.cardGradientTo}
+                                  defaultValue="#18181b"
+                                  onChange={(hex) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      cardGradientTo: hex,
+                                    })
+                                  }
+                                  onReset={() =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      cardGradientTo: undefined,
+                                    })
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Imagem de Fundo do Card (Filho) com Upload / Drag & Drop */}
+                          <div className="space-y-3 pt-2 border-t border-white/5">
+                            <ImageUploadField
+                              label="Imagem de Fundo do Card (Filho)"
+                              description="Foto de fundo interna do componente"
+                              value={selectedSection.styles.cardBgImage || ""}
+                              onChange={(url) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  cardBgImage: url,
+                                })
+                              }
+                              onReset={() =>
+                                updateSectionStyles(selectedSection.id, {
+                                  cardBgImage: undefined,
+                                })
+                              }
+                            />
+
+                            {selectedSection.styles.cardBgImage && (
+                              <div className="space-y-1.5 pl-2 border-l border-white/10">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-semibold text-zinc-300 block">
+                                    Opacidade da Máscara do Card
+                                  </label>
+                                  <span className="text-[10px] text-[#F4B400] font-semibold">
+                                    {selectedSection.styles.cardBgOverlayOpacity ?? 60}%
+                                  </span>
+                                </div>
+                                <SegmentedControl<string>
+                                  value={String(selectedSection.styles.cardBgOverlayOpacity ?? 60)}
+                                  onChange={(val) =>
+                                    updateSectionStyles(selectedSection.id, {
+                                      cardBgOverlayOpacity: Number(val),
+                                    })
+                                  }
+                                  columns={4}
+                                  size="sm"
+                                  options={[
+                                    { value: "30", label: "30%" },
+                                    { value: "60", label: "60%" },
+                                    { value: "80", label: "80%" },
+                                    { value: "95", label: "95%" },
+                                  ]}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Desfoque de Fundo (Backdrop Blur) */}
+                          <div className="space-y-1.5 pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-medium text-zinc-300">
+                                Desfoque de Fundo (Backdrop Blur)
+                              </label>
+                              <span className="text-[10px] text-zinc-500 font-mono">
+                                Efeito vidro fosco
+                              </span>
+                            </div>
+                            <SegmentedControl<SurfaceBlur>
+                              value={selectedSection.styles.surfaceBlur || "md"}
+                              onChange={(blur) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  surfaceBlur: blur,
+                                })
+                              }
+                              columns={5}
+                              size="sm"
+                              options={[
+                                { value: "none", label: "0" },
+                                { value: "sm", label: "SM" },
+                                { value: "md", label: "MD" },
+                                { value: "lg", label: "LG" },
+                                { value: "xl", label: "XL" },
+                              ]}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Efeito ao Passar o Mouse (Hover) */}
+                        <div className="space-y-1.5 pt-2 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-zinc-300 block">
+                              Efeito ao Passar o Mouse (Hover)
+                            </label>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              Interatividade
+                            </span>
+                          </div>
+                          <SegmentedControl<CardHoverEffect>
+                            value={selectedSection.styles.cardHoverEffect || "none"}
+                            onChange={(hov) =>
+                              updateSectionStyles(selectedSection.id, {
+                                cardHoverEffect: hov,
+                              })
+                            }
+                            columns={5}
+                            size="sm"
+                            options={[
+                              { value: "none", label: "Nenhum" },
+                              { value: "lift", label: "Subir 3D" },
+                              { value: "border_highlight", label: "Borda" },
+                              { value: "glow", label: "Glow" },
+                              { value: "shine", label: "Clarear" },
                             ]}
                           />
                         </div>
-
-                        {/* Cor da Borda */}
-                        <ColorFieldRow
-                          label="Cor da Borda do Card"
-                          description="Para acabamentos com contorno visível"
-                          value={selectedSection.styles.borderColor}
-                          defaultValue={effectiveAccentColor}
-                          onChange={(hex) =>
-                            updateSectionStyles(selectedSection.id, {
-                              borderColor: hex,
-                            })
-                          }
-                          onReset={() =>
-                            updateSectionStyles(selectedSection.id, {
-                              borderColor: undefined,
-                            })
-                          }
-                        />
-
-                        {/* Cor de Fundo da Superfície */}
-                        <ColorFieldRow
-                          label="Fundo Customizado da Superfície"
-                          description="Cor de fundo do card/cápsula"
-                          value={selectedSection.styles.customSurface}
-                          defaultValue={siteDoc.theme.palette.surface}
-                          onChange={(hex) =>
-                            updateSectionStyles(selectedSection.id, {
-                              customSurface: hex,
-                            })
-                          }
-                          onReset={() =>
-                            updateSectionStyles(selectedSection.id, {
-                              customSurface: undefined,
-                            })
-                          }
-                        />
 
                         {/* Luz Ambiente do Card */}
                         <div className="space-y-2 pt-2 border-t border-white/5">
@@ -2194,268 +3196,6 @@ export default function StudioPage() {
                             </div>
                           );
                         })()}
-                    </AccordionSection>
-                  </div>
-
-                    {/* CAMADA 4: FUNDO & DIVISORES DA SEÇÃO */}
-                    <div
-                      onMouseEnter={() => setActiveInspectorLayer("bg")}
-                      onFocusCapture={() => setActiveInspectorLayer("bg")}
-                    >
-                      <AccordionSection
-                        title="4. Fundo & Divisores da Seção"
-                        subtitle="Cores de fundo, gradientes, texturas e divisores"
-                        icon={ImageIcon}
-                        defaultOpen={false}
-                      >
-                      <div className="space-y-4">
-                        {/* Cores da Seção */}
-                        <div className="space-y-2.5">
-                          <ColorFieldRow
-                            label="Fundo da Seção"
-                            description="Cor de background deste bloco"
-                            value={selectedSection.styles.customBg}
-                            defaultValue={siteDoc.theme.palette.background}
-                            onChange={(hex) =>
-                              updateSectionStyles(selectedSection.id, {
-                                customBg: hex,
-                              })
-                            }
-                            onReset={() =>
-                              updateSectionStyles(selectedSection.id, {
-                                customBg: undefined,
-                              })
-                            }
-                          />
-
-                          <ColorFieldRow
-                            label="Texto Principal"
-                            description="Cor dos títulos e textos deste bloco"
-                            value={selectedSection.styles.customText}
-                            defaultValue={siteDoc.theme.palette.foreground}
-                            onChange={(hex) =>
-                              updateSectionStyles(selectedSection.id, {
-                                customText: hex,
-                              })
-                            }
-                            onReset={() =>
-                              updateSectionStyles(selectedSection.id, {
-                                customText: undefined,
-                              })
-                            }
-                          />
-
-                          <ColorFieldRow
-                            label="Cor de Destaque (Accent)"
-                            description="Realces e botões deste bloco"
-                            value={selectedSection.styles.customAccent}
-                            defaultValue={siteDoc.theme.palette.accent}
-                            onChange={(hex) =>
-                              updateSectionStyles(selectedSection.id, {
-                                customAccent: hex,
-                              })
-                            }
-                            onReset={() =>
-                              updateSectionStyles(selectedSection.id, {
-                                customAccent: undefined,
-                              })
-                            }
-                          />
-                        </div>
-
-                        {/* Padrão / Textura de Fundo */}
-                        <div className="space-y-1.5 pt-2 border-t border-white/5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              Padrão de Fundo (Pattern Overlay)
-                            </label>
-                            <span className="text-[10px] text-zinc-500">
-                              Malha sutil
-                            </span>
-                          </div>
-                          <SegmentedControl<BackgroundPattern>
-                            value={selectedSection.styles.bgPattern || "none"}
-                            onChange={(pat) =>
-                              updateSectionStyles(selectedSection.id, {
-                                bgPattern: pat,
-                              })
-                            }
-                            columns={4}
-                            size="sm"
-                            options={[
-                              { value: "none", label: "Nenhum" },
-                              { value: "grid", label: "Grade" },
-                              { value: "dots", label: "Pontos" },
-                              { value: "noise", label: "Ruído" },
-                            ]}
-                          />
-                        </div>
-
-                        {/* Gradiente de Fundo */}
-                        <div className="space-y-3 pt-2 border-t border-white/5">
-                          <ModernToggle
-                            label="Gradiente de Fundo"
-                            description="Fundo degradê estilizado de alto impacto"
-                            checked={Boolean(selectedSection.styles.bgGradientEnabled)}
-                            onChange={(chk) =>
-                              updateSectionStyles(selectedSection.id, {
-                                bgGradientEnabled: chk,
-                              })
-                            }
-                          />
-
-                          {selectedSection.styles.bgGradientEnabled && (
-                            <div className="space-y-3 pl-2 border-l border-white/10 mt-2">
-                              <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-zinc-300 block">
-                                  Direção do Gradiente
-                                </label>
-                                <SegmentedControl<GradientDirection>
-                                  value={selectedSection.styles.bgGradientDirection || "to-b"}
-                                  onChange={(dir) =>
-                                    updateSectionStyles(selectedSection.id, {
-                                      bgGradientDirection: dir,
-                                    })
-                                  }
-                                  columns={4}
-                                  size="sm"
-                                  options={[
-                                    { value: "to-b", label: "Vertical ↓" },
-                                    { value: "to-br", label: "Diagonal ↘" },
-                                    { value: "to-r", label: "Horizontal →" },
-                                    { value: "radial", label: "Radial ⦿" },
-                                  ]}
-                                />
-                              </div>
-
-                              <ColorFieldRow
-                                label="Cor Inicial"
-                                description="Ponto de partida do degradê"
-                                value={selectedSection.styles.bgGradientFrom}
-                                defaultValue="#09090b"
-                                onChange={(hex) =>
-                                  updateSectionStyles(selectedSection.id, {
-                                    bgGradientFrom: hex,
-                                  })
-                                }
-                                onReset={() =>
-                                  updateSectionStyles(selectedSection.id, {
-                                    bgGradientFrom: undefined,
-                                  })
-                                }
-                              />
-
-                              <ColorFieldRow
-                                label="Cor Final"
-                                description="Ponto de chegada do degradê"
-                                value={selectedSection.styles.bgGradientTo}
-                                defaultValue="#18181b"
-                                onChange={(hex) =>
-                                  updateSectionStyles(selectedSection.id, {
-                                    bgGradientTo: hex,
-                                  })
-                                }
-                                onReset={() =>
-                                  updateSectionStyles(selectedSection.id, {
-                                    bgGradientTo: undefined,
-                                  })
-                                }
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Imagem de Fundo Global */}
-                        <div className="space-y-3 pt-2 border-t border-white/5">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-zinc-300 block">
-                              URL da Imagem de Fundo
-                            </label>
-                            <input
-                              type="text"
-                              value={selectedSection.styles.bgImage || ""}
-                              onChange={(e) =>
-                                updateSectionStyles(selectedSection.id, {
-                                  bgImage: e.target.value,
-                                })
-                              }
-                              placeholder="https://exemplo.com/imagem.jpg"
-                              className="w-full px-3 py-2 text-xs rounded-xl bg-zinc-950 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-[#F4B400] transition-colors"
-                            />
-                          </div>
-
-                          {selectedSection.styles.bgImage && (
-                            <div className="space-y-1.5 pl-2 border-l border-white/10">
-                              <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold text-zinc-300 block">
-                                  Opacidade da Máscara Escura
-                                </label>
-                                <span className="text-[10px] text-[#F4B400] font-semibold">
-                                  {selectedSection.styles.bgOverlayOpacity ?? 70}%
-                                </span>
-                              </div>
-                              <SegmentedControl<string>
-                                value={String(selectedSection.styles.bgOverlayOpacity ?? 70)}
-                                onChange={(val) =>
-                                  updateSectionStyles(selectedSection.id, {
-                                    bgOverlayOpacity: Number(val),
-                                  })
-                                }
-                                columns={4}
-                                size="sm"
-                                options={[
-                                  { value: "40", label: "40%" },
-                                  { value: "60", label: "60%" },
-                                  { value: "80", label: "80%" },
-                                  { value: "95", label: "95%" },
-                                ]}
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Divisores de Seção (Bordas Superior e Inferior) */}
-                        <div className="space-y-2.5 pt-2 border-t border-white/5">
-                          <label className="text-xs font-semibold text-zinc-300 block">
-                            Divisores da Seção
-                          </label>
-                          <ModernToggle
-                            label="Borda Superior (Top Divider)"
-                            description="Linha divisória sutil no topo do bloco"
-                            checked={Boolean(selectedSection.styles.borderTop)}
-                            onChange={(chk) =>
-                              updateSectionStyles(selectedSection.id, {
-                                borderTop: chk,
-                              })
-                            }
-                          />
-
-                          <ModernToggle
-                            label="Borda Inferior (Bottom Divider)"
-                            description="Linha divisória sutil na base do bloco"
-                            checked={Boolean(selectedSection.styles.borderBottom)}
-                            onChange={(chk) =>
-                              updateSectionStyles(selectedSection.id, {
-                                borderBottom: chk,
-                              })
-                            }
-                          />
-
-                          {(selectedSection.styles.borderTop ||
-                            selectedSection.styles.borderBottom) && (
-                            <ModernToggle
-                              label="Linha com Luz de Gradiente (Glow Divider)"
-                              description="Linha central com brilho gradiente na cor do tema"
-                              checked={Boolean(selectedSection.styles.borderGlow)}
-                              onChange={(chk) =>
-                                updateSectionStyles(selectedSection.id, {
-                                  borderGlow: chk,
-                                })
-                              }
-                            />
-                          )}
-                        </div>
-                      </div>
                     </AccordionSection>
                   </div>
                 </div>

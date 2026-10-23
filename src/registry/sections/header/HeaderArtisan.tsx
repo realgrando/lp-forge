@@ -10,10 +10,14 @@ import { DynamicIcon } from "@/components/engine/DynamicIcon";
 import {
   buttonConfigSchema,
   ContentMaxWidth,
+  HeaderSurfaceType,
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
+import { useStudioStore } from "@/store/useStudioStore";
+import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 
 const headerArtisanSchema = z.object({
   brandSubtitle: z.string(),
@@ -150,6 +154,31 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
     const hasMobileMenu = hasNavLinks;
 
+    const viewport = useStudioStore((s) => s.viewport);
+    const isMobileLayout = layout?.containerWidth === "mobile" || viewport === "mobile";
+    const isNarrowWidth = layout?.containerWidth === "narrow" || layout?.componentWidth === "narrow";
+    const isBoxedWidth = layout?.containerWidth === "boxed" || layout?.componentWidth === "boxed";
+
+    // Resolução combinável de Comportamento de Rolagem
+    const scrollVisibility =
+      layout?.scrollVisibility ||
+      (layout?.headerScrollBehavior === "static" || layout?.sticky === false
+        ? "static"
+        : "fixed");
+    const scrollSurface =
+      layout?.scrollSurface ||
+      (layout?.headerScrollBehavior === "blur_on_scroll"
+        ? "transparent_to_glass"
+        : layout?.headerScrollBehavior === "solid_on_scroll"
+        ? "transparent_to_solid"
+        : "keep");
+    const scrollShape = layout?.scrollShape || "keep";
+
+    const { isScrolled, isVisible, isScrollingUp, currentScroll } = useHeaderScroll(
+      scrollVisibility,
+      layout?.sticky !== false
+    );
+
     const innerYClasses: Record<string, string> = {
       none: "py-2 min-h-[56px]",
       compact: "py-3 md:py-4 min-h-[64px] md:min-h-[76px]",
@@ -157,15 +186,45 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       spacious: "py-6 md:py-8 min-h-[84px] md:min-h-[120px]",
     };
 
-    const innerPadXClasses: Record<string, string> = {
-      none: "px-0",
-      compact: "px-4 sm:px-6",
-      normal: "px-6 lg:px-12",
-      spacious: "px-8 lg:px-20",
+    const getInnerPadXClass = () => {
+      const scale = layout?.paddingInnerX || (isMobileLayout ? "normal" : "normal");
+      if (scale === "none") return "px-0";
+      if (isMobileLayout) {
+        if (scale === "compact") return "px-3 sm:px-4";
+        if (scale === "normal") return "px-6 sm:px-7";
+        return "px-10 sm:px-12";
+      }
+      if (isNarrowWidth) {
+        if (scale === "compact") return "px-4 sm:px-6";
+        if (scale === "normal") return "px-8 sm:px-10";
+        return "px-12 sm:px-16";
+      }
+      if (isBoxedWidth) {
+        if (scale === "compact") return "px-6 sm:px-8";
+        if (scale === "normal") return "px-10 sm:px-14";
+        return "px-16 sm:px-20 md:px-24";
+      }
+      if (scale === "compact") return "px-6 sm:px-10";
+      if (scale === "normal") return "px-12 sm:px-16 md:px-20";
+      return "px-16 sm:px-24 md:px-32 lg:px-36";
     };
 
-    const innerY = innerYClasses[layout?.paddingInner || "normal"];
-    const innerPadX = innerPadXClasses[layout?.paddingInnerX || "normal"];
+    const mobileInnerYClasses: Record<string, string> = {
+      none: "py-1 min-h-[44px]",
+      compact: "py-2 min-h-[52px]",
+      normal: "py-3 min-h-[60px]",
+      spacious: "py-4.5 min-h-[72px]",
+    };
+
+    const isShrinkSlim =
+      scrollShape === "shrink_slim" && isScrolled && !isScrollingUp && currentScroll > 60;
+    const baseInnerY = isMobileLayout
+      ? mobileInnerYClasses[layout?.paddingInner || "normal"]
+      : innerYClasses[layout?.paddingInner || "normal"];
+    const innerY = isShrinkSlim
+      ? "py-1.5 md:py-2 min-h-[46px] md:min-h-[54px]"
+      : baseInnerY;
+    const innerPadX = getInnerPadXClass();
 
     const getNormalizedHref = (rawUrl?: string) => {
       if (!rawUrl || rawUrl === "#") return "#";
@@ -182,30 +241,83 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       return trimmed;
     };
 
+    // Resolução de Superfície em 2 Estados (Inicial vs. Ao Rolar)
+    const initialSurface: HeaderSurfaceType =
+      layout?.headerSurfaceInitial ||
+      (layout?.scrollSurface === "transparent_to_glass" ||
+      layout?.scrollSurface === "transparent_to_solid"
+        ? "transparent"
+        : (styles.surfaceVariant as HeaderSurfaceType) || "solid");
+
+    const scrolledSurface: HeaderSurfaceType =
+      layout?.headerSurfaceScrolled ||
+      (layout?.scrollSurface === "transparent_to_glass"
+        ? "glass"
+        : layout?.scrollSurface === "transparent_to_solid" ||
+          layout?.scrollSurface === "glass_to_solid"
+        ? "solid"
+        : initialSurface);
+
+    const activeSurfaceType: HeaderSurfaceType = isScrolled ? scrolledSurface : initialSurface;
+    const isTransparentActive = activeSurfaceType === "transparent";
+
+    const getDynamicSurfaceClasses = () => {
+      return getHeaderSurfaceClasses(activeSurfaceType);
+    };
+
+    const isAutoHide = scrollVisibility === "auto_hide";
+
     const isAutoWidth = layout?.componentWidth === "auto";
+
+    // Resolução Completa de Acabamento da Superfície (Bordas 0px garantido, cores, opacidades, blur e hover)
+    const surfaceResolution = resolveHeaderSurfaceStyle({
+      styles,
+      theme,
+      activeSurfaceType,
+      isCapsuleActive: false,
+      isEdgeToEdge,
+      isTransparentActive,
+    });
+
+    const headerShapeClasses = isEdgeToEdge
+      ? cn(
+          "w-full max-w-none mx-0 mt-0",
+          styles.borderRadius && styles.borderRadius !== "none"
+            ? getRadiusClass(radiusPreset)
+            : "rounded-none"
+        )
+      : cn(
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          "mt-0",
+          getRadiusClass(radiusPreset)
+        );
+
+    // Efeito Auto-Hide Suavizado
+    const autoHideTransformClass =
+      isAutoHide && !isVisible
+        ? "-translate-y-full opacity-0 scale-[0.98] pointer-events-none"
+        : "translate-y-0 opacity-100 scale-100";
 
     return (
       <header
         className={cn(
-          "transition-all relative z-40",
-          isAutoWidth ? "w-auto max-w-fit" : "w-full",
-          isEdgeToEdge
-            ? "border-b border-white/10 rounded-none border-l-0 border-r-0 border-t-0"
-            : cn("shadow-xl border border-white/10", getRadiusClass(radiusPreset)),
-          getSurfaceClasses(surfaceStyle)
+          "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-40",
+          headerShapeClasses,
+          autoHideTransformClass,
+          surfaceResolution.className
         )}
         style={{
-          backgroundColor: styles.customSurface || undefined,
-          ...(styles.borderWidth && styles.borderWidth !== "0" && !isEdgeToEdge
-            ? {
-                borderWidth: `${styles.borderWidth}px`,
-                borderColor: styles.borderColor || `${accentColor}40`,
-              }
-            : {}),
+          ...surfaceResolution.style,
         }}
       >
         {/* BARRA DESKTOP: Layout Editorial em 2 Níveis */}
-        <div className={cn("hidden md:flex flex-col items-center gap-4 text-center", innerY, innerPadX)}>
+        <div
+          className={cn(
+            isMobileLayout ? "hidden" : "hidden md:flex flex-col items-center gap-4 text-center",
+            innerY,
+            innerPadX
+          )}
+        >
           {/* Nível 1: Subtítulo Editorial + Marca Central */}
           <div className="flex flex-col items-center gap-1.5">
             {!isHidden("brandSubtitle") && content.brandSubtitle && (
@@ -260,14 +372,27 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
 
           {/* Nível 2: Links Distribuídos + CTA */}
           {(hasNavLinks || hasCta) && (
-            <div className="w-full pt-4 border-t border-white/10 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+            <div
+              className={cn(
+                "w-full pt-4 border-t border-white/10 flex flex-wrap items-center justify-center",
+                isNarrowWidth ? "gap-4 sm:gap-6" : "gap-8 sm:gap-12"
+              )}
+            >
               {hasNavLinks && (
-                <nav className="flex flex-wrap items-center justify-center gap-8 sm:gap-10">
+                <nav
+                  className={cn(
+                    "flex flex-wrap items-center justify-center",
+                    isNarrowWidth ? "gap-4 sm:gap-6" : "gap-8 sm:gap-10"
+                  )}
+                >
                   {content.navLinks.map((item, idx) => (
                     <a
                       key={idx}
                       href={getNormalizedHref(item.url)}
-                      className="text-[10px] font-black uppercase tracking-[0.3em] opacity-65 hover:opacity-100 transition-opacity relative group py-1"
+                      className={cn(
+                        "font-black uppercase tracking-[0.3em] opacity-65 hover:opacity-100 transition-opacity relative group py-1 whitespace-nowrap",
+                        isNarrowWidth ? "text-[9px]" : "text-[10px]"
+                      )}
                     >
                       {item.label}
                       <span
@@ -292,7 +417,15 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
         </div>
 
         {/* BARRA MOBILE: Compacta com Marca à Esquerda e Hamburguer à Direita */}
-        <div className={cn("md:hidden flex items-center justify-between py-3", innerPadX)}>
+        <div
+          className={cn(
+            isMobileLayout
+              ? "flex items-center justify-between"
+              : "md:hidden flex items-center justify-between",
+            innerY,
+            innerPadX
+          )}
+        >
           {!isHidden("brandName") && (
             <a href="#" className="flex items-center gap-2 min-w-0">
               <div className="flex items-baseline truncate">
@@ -343,7 +476,12 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
 
         {/* GAVETA MOBILE SUSPENSA */}
         {hasMobileMenu && mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl px-4 py-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div
+            className={cn(
+              "border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl px-4 py-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200",
+              !isMobileLayout && "md:hidden"
+            )}
+          >
             {!isHidden("brandSubtitle") && content.brandSubtitle && (
               <div className="pb-2 text-center">
                 <EditableText
@@ -372,7 +510,10 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
             </nav>
 
             {hasCta && (
-              <div className="pt-2 border-t border-white/10">
+              <div
+                onClick={() => setMobileMenuOpen(false)}
+                className="pt-2 border-t border-white/10"
+              >
                 <SmartButton
                   button={{
                     ...content.ctaButton,
