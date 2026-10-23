@@ -10,6 +10,8 @@ interface AccordionSectionProps {
   icon?: LucideIcon;
   badge?: string | number;
   defaultOpen?: boolean;
+  isOpen?: boolean;
+  onToggle?: () => void;
   children: React.ReactNode;
   headerAction?: React.ReactNode;
 }
@@ -20,30 +22,65 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
   icon: Icon,
   badge,
   defaultOpen = true,
+  isOpen: controlledIsOpen,
+  onToggle,
   children,
   headerAction,
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    }
+    if (!isControlled) {
+      setInternalIsOpen(!internalIsOpen);
+    }
+  };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm overflow-hidden transition-all duration-200 hover:border-white/15">
+    <div
+      className={cn(
+        "rounded-2xl border transition-all duration-200 overflow-hidden",
+        isOpen
+          ? "border-amber-400/30 bg-zinc-900/80 shadow-lg shadow-black/40 ring-1 ring-amber-400/10"
+          : "border-white/10 bg-zinc-900/40 hover:border-white/20 hover:bg-zinc-900/60"
+      )}
+    >
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 flex items-center justify-between cursor-pointer select-none hover:bg-white/[0.02] transition-colors"
+        onClick={handleToggle}
+        className={cn(
+          "w-full px-4 py-3 flex items-center justify-between cursor-pointer select-none transition-colors",
+          isOpen ? "bg-white/[0.03]" : "hover:bg-white/[0.02]"
+        )}
       >
         <div className="flex items-center gap-2.5 min-w-0">
           {Icon && (
-            <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#F4B400] shrink-0">
+            <div
+              className={cn(
+                "w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-all",
+                isOpen
+                  ? "bg-amber-400/15 border-amber-400/40 text-amber-400 shadow-sm shadow-amber-500/10"
+                  : "bg-white/5 border-white/10 text-zinc-400"
+              )}
+            >
               <Icon className="w-3.5 h-3.5" />
             </div>
           )}
           <div className="text-left truncate">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-zinc-100 tracking-tight">
+              <span
+                className={cn(
+                  "text-xs font-bold tracking-tight transition-colors",
+                  isOpen ? "text-white" : "text-zinc-300"
+                )}
+              >
                 {title}
               </span>
               {badge !== undefined && (
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-white/10 text-[#F4B400] font-semibold">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-amber-400/10 text-amber-400 border border-amber-400/20 font-semibold tracking-wide">
                   {badge}
                 </span>
               )}
@@ -56,17 +93,20 @@ export const AccordionSection: React.FC<AccordionSectionProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center gap-2 shrink-0 ml-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {headerAction}
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={handleToggle}
             className="p-1 rounded-md text-zinc-400 hover:text-white transition-colors"
           >
             <ChevronDown
               className={cn(
                 "w-4 h-4 transition-transform duration-200 text-zinc-400",
-                isOpen && "rotate-180 text-white"
+                isOpen && "rotate-180 text-amber-400"
               )}
             />
           </button>

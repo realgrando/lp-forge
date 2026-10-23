@@ -158,6 +158,24 @@ export default function StudioPage() {
   const [rightTab, setRightTab] = useState<"content" | "style" | "typography">(
     "content"
   );
+  const [openDesignAccordion, setOpenDesignAccordion] = useState<string | null>(null);
+
+  // Iniciar acordeões de design sempre fechados ao trocar de seção selecionada
+  useEffect(() => {
+    setOpenDesignAccordion(null);
+  }, [selectedSectionId]);
+
+  const toggleDesignAccordion = (key: string) => {
+    setOpenDesignAccordion((prev) => {
+      const next = prev === key ? null : key;
+      if (next === "parent") setActiveInspectorLayer("parent");
+      else if (next === "child" || next === "scroll") setActiveInspectorLayer("child");
+      else if (next === "inner") setActiveInspectorLayer("inner");
+      else setActiveInspectorLayer(null);
+      return next;
+    });
+  };
+
   const [showJsonModal, setShowJsonModal] = useState(false);
 
   // Controles de Visualização Fiel, Escala e Painéis Laterais
@@ -1346,19 +1364,74 @@ export default function StudioPage() {
                 })()}
 
                 {/* ABA 2: SEÇÃO & SUPERFÍCIE (Macro, Meso e Micro Camadas de Estrutura) */}
-                {rightTab === "style" && (
-                  <div className="space-y-4">
-                    {/* CAMADA 1: CONTAINER DA SEÇÃO (PAI) */}
-                    <div
-                      onMouseEnter={() => setActiveInspectorLayer("parent")}
-                      onFocusCapture={() => setActiveInspectorLayer("parent")}
-                    >
-                      <AccordionSection
-                        title="1. Container da Seção (Pai)"
-                        subtitle="Largura, altura e alinhamento do bloco na página"
-                        icon={Box}
-                        defaultOpen={true}
+                {rightTab === "style" && (() => {
+                  const parentWidthBadge =
+                    selectedSection.layout.containerWidth === "boxed"
+                      ? "Boxed"
+                      : selectedSection.layout.containerWidth === "narrow"
+                      ? "Narrow"
+                      : selectedSection.layout.containerWidth === "mobile"
+                      ? "Mobile"
+                      : "Full";
+
+                  const childWidth =
+                    selectedSection.layout.componentWidth ||
+                    (selectedSection.type === "header.capsule" ? "auto" : "full");
+                  const childWidthBadge =
+                    childWidth === "auto"
+                      ? "Cápsula"
+                      : childWidth === "narrow"
+                      ? "Estreito"
+                      : childWidth === "boxed"
+                      ? "Bloco"
+                      : "Total";
+
+                  const innerDirection =
+                    selectedSection.layout.direction ||
+                    (selectedSection.type.startsWith("header.") ? "row" : "col");
+                  const innerDirectionBadge =
+                    innerDirection === "col"
+                      ? "Coluna"
+                      : innerDirection === "row"
+                      ? "Linha"
+                      : "Responsivo";
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Barra de controle rápido e status das camadas */}
+                      <div className="flex items-center justify-between px-1 text-xs">
+                        <div className="flex items-center gap-1.5 text-zinc-400">
+                          <span className="font-semibold text-zinc-300">Camadas de Design</span>
+                          <span className="text-[10px] text-zinc-500">• 1 por vez</span>
+                        </div>
+                        {openDesignAccordion !== null && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenDesignAccordion(null);
+                              setActiveInspectorLayer(null);
+                            }}
+                            className="text-[11px] text-amber-400/90 hover:text-amber-300 font-medium hover:underline transition-colors"
+                          >
+                            Recolher tudo
+                          </button>
+                        )}
+                      </div>
+
+                      {/* CAMADA 1: CONTAINER DA SEÇÃO (PAI) */}
+                      <div
+                        onMouseEnter={() => {
+                          if (openDesignAccordion === "parent") setActiveInspectorLayer("parent");
+                        }}
                       >
+                        <AccordionSection
+                          title="1. Container da Seção (Pai)"
+                          subtitle="Largura, altura e alinhamento do bloco na página"
+                          icon={Box}
+                          badge={parentWidthBadge}
+                          isOpen={openDesignAccordion === "parent"}
+                          onToggle={() => toggleDesignAccordion("parent")}
+                        >
                       <div className="space-y-5">
                         {/* Largura Máxima do Container Pai */}
                         <div className="space-y-1.5">
@@ -1840,14 +1913,17 @@ export default function StudioPage() {
 
                     {/* CAMADA 2: CONTAINER DO COMPONENTE (FILHO) */}
                     <div
-                      onMouseEnter={() => setActiveInspectorLayer("child")}
-                      onFocusCapture={() => setActiveInspectorLayer("child")}
+                      onMouseEnter={() => {
+                        if (openDesignAccordion === "child") setActiveInspectorLayer("child");
+                      }}
                     >
                       <AccordionSection
                         title="2. Container do Componente (Filho)"
                         subtitle="Largura do componente, respiro e estilo do card"
                         icon={Layers}
-                        defaultOpen={true}
+                        badge={childWidthBadge}
+                        isOpen={openDesignAccordion === "child"}
+                        onToggle={() => toggleDesignAccordion("child")}
                       >
                         <div className="space-y-4">
                           {/* Largura do Componente Filho */}
@@ -2409,14 +2485,17 @@ export default function StudioPage() {
 
                     {/* CAMADA 3: ELEMENTOS INTERNOS (FLEX & FLUXO) */}
                     <div
-                      onMouseEnter={() => setActiveInspectorLayer("inner")}
-                      onFocusCapture={() => setActiveInspectorLayer("inner")}
+                      onMouseEnter={() => {
+                        if (openDesignAccordion === "inner") setActiveInspectorLayer("inner");
+                      }}
                     >
                       <AccordionSection
                         title="3. Elementos Internos (Distribuição & Alinhamento)"
                         subtitle="Posicionamento e alinhamento dos elementos dentro do fluxo"
                         icon={Sliders}
-                        defaultOpen={true}
+                        badge={innerDirectionBadge}
+                        isOpen={openDesignAccordion === "inner"}
+                        onToggle={() => toggleDesignAccordion("inner")}
                       >
                         {(() => {
                           const direction =
@@ -2679,6 +2758,13 @@ export default function StudioPage() {
 
                       const isOverlayHero = selectedSection.layout.headerOverlay !== false;
 
+                      const scrollBadge =
+                        currentVisibility === "static"
+                          ? "Estático"
+                          : currentVisibility === "auto_hide"
+                          ? "Auto-Hide"
+                          : "Fixo";
+
                       const SURFACE_OPTIONS: {
                         id: HeaderSurfaceType;
                         label: string;
@@ -2725,14 +2811,17 @@ export default function StudioPage() {
 
                       return (
                         <div
-                          onMouseEnter={() => setActiveInspectorLayer("child")}
-                          onFocusCapture={() => setActiveInspectorLayer("child")}
+                          onMouseEnter={() => {
+                            if (openDesignAccordion === "scroll") setActiveInspectorLayer("child");
+                          }}
                         >
                           <AccordionSection
                             title="4. Fixação & Comportamento ao Rolar"
                             subtitle="Sticky, auto-hide, transição de superfícies e modo slim"
                             icon={Compass}
-                            defaultOpen={false}
+                            badge={scrollBadge}
+                            isOpen={openDesignAccordion === "scroll"}
+                            onToggle={() => toggleDesignAccordion("scroll")}
                           >
                             <div className="space-y-3.5">
                               {/* 0. Sobreposição Hero / Fundo Contínuo */}
@@ -3024,8 +3113,9 @@ export default function StudioPage() {
                         </div>
                       );
                     })()}
-                </div>
-              )}
+                    </div>
+                  );
+                })()}
 
                 {/* ABA 3: TIPOGRAFIA, COR E ÍCONE POR ELEMENTO (Micro Camada) */}
                 {rightTab === "typography" && (
