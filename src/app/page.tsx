@@ -1348,6 +1348,385 @@ export default function StudioPage() {
                 {/* ABA 2: SEÇÃO & SUPERFÍCIE (Macro, Meso e Micro Camadas de Estrutura) */}
                 {rightTab === "style" && (
                   <div className="space-y-4">
+                    {/* BLOCO EXCLUSIVO: FIXAÇÃO & ROLAGEM (HEADER) */}
+                    {selectedSection.type.startsWith("header.") && (() => {
+                      const currentVisibility: HeaderScrollVisibility =
+                        selectedSection.layout.scrollVisibility ||
+                        (selectedSection.layout.headerScrollBehavior === "static" ||
+                        selectedSection.layout.sticky === false
+                          ? "static"
+                          : "fixed");
+
+                      const currentInitialSurface: HeaderSurfaceType =
+                        selectedSection.layout.headerSurfaceInitial ||
+                        (selectedSection.layout.scrollSurface === "transparent_to_glass" ||
+                        selectedSection.layout.scrollSurface === "transparent_to_solid"
+                          ? "transparent"
+                          : (selectedSection.styles.surfaceVariant as HeaderSurfaceType) ||
+                            "solid");
+
+                      const currentScrolledSurface: HeaderSurfaceType =
+                        selectedSection.layout.headerSurfaceScrolled ||
+                        (selectedSection.layout.scrollSurface === "transparent_to_glass"
+                          ? "glass"
+                          : selectedSection.layout.scrollSurface === "transparent_to_solid" ||
+                            selectedSection.layout.scrollSurface === "glass_to_solid"
+                          ? "solid"
+                          : currentInitialSurface);
+
+                      const currentShape: HeaderScrollShape =
+                        selectedSection.layout.scrollShape === "shrink_slim"
+                          ? "shrink_slim"
+                          : "keep";
+
+                      const isOverlayHero = selectedSection.layout.headerOverlay !== false;
+
+                      const SURFACE_OPTIONS: {
+                        id: HeaderSurfaceType;
+                        label: string;
+                        desc: string;
+                        icon: React.ReactNode;
+                      }[] = [
+                        {
+                          id: "transparent",
+                          label: "Transparente",
+                          desc: "100% invisível, mostra o fundo do hero",
+                          icon: <Eye className="w-3 h-3 text-zinc-400" />,
+                        },
+                        {
+                          id: "solid",
+                          label: "Sólido (100% Opaco)",
+                          desc: "Fundo preto denso sem vazamento de luz",
+                          icon: <Shield className="w-3 h-3 text-emerald-400" />,
+                        },
+                        {
+                          id: "glass",
+                          label: "Vidro Fosco (Glass)",
+                          desc: "Efeito translúcido com desfoque denso",
+                          icon: <Droplets className="w-3 h-3 text-sky-400" />,
+                        },
+                        {
+                          id: "bordered",
+                          label: "Borda Minimal",
+                          desc: "Fundo ultra sutil destacando contornos",
+                          icon: <Layers className="w-3 h-3 text-zinc-300" />,
+                        },
+                        {
+                          id: "3d_floating",
+                          label: "Elevado 3D",
+                          desc: "Sólido com sombra tridimensional",
+                          icon: <Box className="w-3 h-3 text-amber-400" />,
+                        },
+                        {
+                          id: "neon",
+                          label: "Neon Glow",
+                          desc: "Contorno luminoso na cor de destaque",
+                          icon: <Sparkles className="w-3 h-3 text-purple-400" />,
+                        },
+                      ];
+
+                      return (
+                        <div
+                          onMouseEnter={() => setActiveInspectorLayer("child")}
+                          onFocusCapture={() => setActiveInspectorLayer("child")}
+                        >
+                          <AccordionSection
+                            title="Fixação & Comportamento ao Rolar"
+                            subtitle="Sticky, auto-hide, transição de superfícies e modo slim"
+                            icon={Compass}
+                            defaultOpen={true}
+                          >
+                            <div className="space-y-3.5">
+                              {/* 0. Sobreposição Hero / Fundo Contínuo */}
+                              <ModernToggle
+                                label="Fundo Contínuo (Sobrepor ao Hero)"
+                                description="O fundo e luz do Hero sobem atrás do header sem cortar conteúdo"
+                                checked={isOverlayHero}
+                                onChange={(checked) =>
+                                  updateSectionLayout(selectedSection.id, {
+                                    headerOverlay: checked,
+                                  })
+                                }
+                              />
+
+                              {/* 1. Fixação & Visibilidade */}
+                              <div className="space-y-1.5 bg-zinc-950/60 p-2.5 rounded-xl border border-white/5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1">
+                                    <Pin className="w-3 h-3 text-zinc-400" />
+                                    1. Fixação & Visibilidade
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500 font-mono">
+                                    {currentVisibility === "fixed"
+                                      ? "Sempre Fixo"
+                                      : currentVisibility === "auto_hide"
+                                      ? "Auto-Hide (Suave)"
+                                      : "Rola Junto"}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1">
+                                  {[
+                                    {
+                                      id: "fixed" as const,
+                                      label: "Sempre Fixo",
+                                      desc: "Fixado no topo",
+                                      icon: <Pin className="w-3 h-3 text-[#F4B400]" />,
+                                    },
+                                    {
+                                      id: "auto_hide" as const,
+                                      label: "Auto-Hide",
+                                      desc: "Some ao descer / surge ao subir",
+                                      icon: <EyeOff className="w-3 h-3 text-sky-400" />,
+                                    },
+                                    {
+                                      id: "static" as const,
+                                      label: "Estático",
+                                      desc: "Acompanha página",
+                                      icon: <ArrowDown className="w-3 h-3 text-zinc-400" />,
+                                    },
+                                  ].map((item) => {
+                                    const isSel = currentVisibility === item.id;
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() =>
+                                          updateSectionLayout(selectedSection.id, {
+                                            scrollVisibility: item.id,
+                                            sticky: item.id !== "static",
+                                          })
+                                        }
+                                        className={cn(
+                                          "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                          isSel
+                                            ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm"
+                                            : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                        )}
+                                      >
+                                        <div className="flex items-center justify-between w-full">
+                                          <span
+                                            className={cn(
+                                              "font-medium text-[11px] flex items-center gap-1",
+                                              isSel ? "text-[#F4B400]" : "text-zinc-200"
+                                            )}
+                                          >
+                                            {item.icon}
+                                            {item.label}
+                                          </span>
+                                          {isSel && (
+                                            <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
+                                          )}
+                                        </div>
+                                        <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                          {item.desc}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* 2. Superfície em 2 Estados */}
+                              <div className="space-y-3 bg-zinc-950/60 p-3 rounded-xl border border-white/5">
+                                <div className="flex items-center justify-between pb-1 border-b border-white/5">
+                                  <span className="text-[11px] font-semibold text-zinc-200 flex items-center gap-1.5">
+                                    <Droplets className="w-3.5 h-3.5 text-sky-400" />
+                                    2. Superfície em 2 Estados
+                                  </span>
+                                  <div className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-900 border border-white/10">
+                                    <span className="text-[#F4B400] font-semibold">
+                                      {SURFACE_OPTIONS.find((o) => o.id === currentInitialSurface)?.label.split(" ")[0] || "Transparente"}
+                                    </span>
+                                    <span className="text-zinc-500">→</span>
+                                    <span className="text-sky-400 font-semibold">
+                                      {SURFACE_OPTIONS.find((o) => o.id === currentScrolledSurface)?.label.split(" ")[0] || "Sólido"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Estado 1: No Topo (Inicial) */}
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-semibold text-[#F4B400] flex items-center gap-1 tracking-wide uppercase">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#F4B400]"></span>
+                                      Estado 1: No Topo (Inicial)
+                                    </span>
+                                    <span className="text-[9px] text-zinc-400 font-medium">
+                                      {SURFACE_OPTIONS.find((o) => o.id === currentInitialSurface)?.label}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    {SURFACE_OPTIONS.map((item) => {
+                                      const isSelected = currentInitialSurface === item.id;
+                                      return (
+                                        <button
+                                          key={`initial-${item.id}`}
+                                          type="button"
+                                          onClick={() => {
+                                            updateSectionLayout(selectedSection.id, {
+                                              headerSurfaceInitial: item.id,
+                                            });
+                                            if (item.id !== "transparent") {
+                                              updateSectionStyles(selectedSection.id, {
+                                                surfaceVariant: item.id as SurfaceStyle,
+                                              });
+                                            }
+                                          }}
+                                          className={cn(
+                                            "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                            isSelected
+                                              ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm ring-1 ring-[#F4B400]/30"
+                                              : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                          )}
+                                        >
+                                          <div className="flex items-center justify-between w-full">
+                                            <span
+                                              className={cn(
+                                                "font-medium text-[11px] flex items-center gap-1",
+                                                isSelected ? "text-[#F4B400]" : "text-zinc-200"
+                                              )}
+                                            >
+                                              {item.icon}
+                                              {item.label}
+                                            </span>
+                                            {isSelected && (
+                                              <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
+                                            )}
+                                          </div>
+                                          <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                            {item.desc}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Estado 2: Ao Rolar (Scrolled) */}
+                                <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-semibold text-sky-400 flex items-center gap-1 tracking-wide uppercase">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                                      Estado 2: Ao Rolar (Scrolled)
+                                    </span>
+                                    <span className="text-[9px] text-zinc-400 font-medium">
+                                      {SURFACE_OPTIONS.find((o) => o.id === currentScrolledSurface)?.label}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-1.5">
+                                    {SURFACE_OPTIONS.map((item) => {
+                                      const isSelected = currentScrolledSurface === item.id;
+                                      return (
+                                        <button
+                                          key={`scrolled-${item.id}`}
+                                          type="button"
+                                          onClick={() => {
+                                            updateSectionLayout(selectedSection.id, {
+                                              headerSurfaceScrolled: item.id,
+                                            });
+                                          }}
+                                          className={cn(
+                                            "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                            isSelected
+                                              ? "bg-sky-500/15 border-sky-400 text-white shadow-sm ring-1 ring-sky-400/30"
+                                              : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                          )}
+                                        >
+                                          <div className="flex items-center justify-between w-full">
+                                            <span
+                                              className={cn(
+                                                "font-medium text-[11px] flex items-center gap-1",
+                                                isSelected ? "text-sky-400" : "text-zinc-200"
+                                              )}
+                                            >
+                                              {item.icon}
+                                              {item.label}
+                                            </span>
+                                            {isSelected && (
+                                              <Check className="w-3 h-3 text-sky-400 shrink-0" />
+                                            )}
+                                          </div>
+                                          <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                            {item.desc}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* 3. Altura ao Rolar (Slim) */}
+                              <div className="space-y-1.5 bg-zinc-950/60 p-2.5 rounded-xl border border-white/5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1">
+                                    <Minimize2 className="w-3 h-3 text-emerald-400" />
+                                    3. Altura ao Rolar (Slim)
+                                  </span>
+                                  <span className="text-[10px] text-zinc-500 font-mono">
+                                    {currentShape === "shrink_slim" ? "Slim Ativo" : "Altura Fixa"}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {[
+                                    {
+                                      id: "keep" as const,
+                                      label: "Manter Altura",
+                                      desc: "Mantém dimensões originais intactas ao rolar",
+                                      icon: <Maximize2 className="w-3 h-3 text-zinc-400" />,
+                                    },
+                                    {
+                                      id: "shrink_slim" as const,
+                                      label: "Encolher ao Rolar (Slim)",
+                                      desc: "Encolhe ao descer e expande de volta ao subir",
+                                      icon: <Minimize2 className="w-3 h-3 text-emerald-400" />,
+                                    },
+                                  ].map((item) => {
+                                    const isSel = currentShape === item.id;
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() =>
+                                          updateSectionLayout(selectedSection.id, {
+                                            scrollShape: item.id,
+                                          })
+                                        }
+                                        className={cn(
+                                          "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
+                                          isSel
+                                            ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm ring-1 ring-[#F4B400]/30"
+                                            : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
+                                        )}
+                                      >
+                                        <div className="flex items-center justify-between w-full">
+                                          <span
+                                            className={cn(
+                                              "font-medium text-[11px] flex items-center gap-1",
+                                              isSel ? "text-[#F4B400]" : "text-zinc-200"
+                                            )}
+                                          >
+                                            {item.icon}
+                                            {item.label}
+                                          </span>
+                                          {isSel && (
+                                            <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
+                                          )}
+                                        </div>
+                                        <span className="text-[9px] text-zinc-500 line-clamp-1">
+                                          {item.desc}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          </AccordionSection>
+                        </div>
+                      );
+                    })()}
+
                     {/* CAMADA 1: CONTAINER DA SEÇÃO (PAI) */}
                     <div
                       onMouseEnter={() => setActiveInspectorLayer("parent")}
@@ -1391,383 +1770,6 @@ export default function StudioPage() {
                               { value: "mobile", label: "Mobile", icon: <Smartphone className="w-3 h-3" /> },
                             ]}
                           />
-
-                          {/* Comportamento da Barra ao Rolar (Modular & Combinável) */}
-                          {selectedSection.type.startsWith("header.") && (() => {
-                            const currentVisibility: HeaderScrollVisibility =
-                              selectedSection.layout.scrollVisibility ||
-                              (selectedSection.layout.headerScrollBehavior === "static" ||
-                              selectedSection.layout.sticky === false
-                                ? "static"
-                                : "fixed");
-
-                            const currentInitialSurface: HeaderSurfaceType =
-                              selectedSection.layout.headerSurfaceInitial ||
-                              (selectedSection.layout.scrollSurface === "transparent_to_glass" ||
-                              selectedSection.layout.scrollSurface === "transparent_to_solid"
-                                ? "transparent"
-                                : (selectedSection.styles.surfaceVariant as HeaderSurfaceType) ||
-                                  "solid");
-
-                            const currentScrolledSurface: HeaderSurfaceType =
-                              selectedSection.layout.headerSurfaceScrolled ||
-                              (selectedSection.layout.scrollSurface === "transparent_to_glass"
-                                ? "glass"
-                                : selectedSection.layout.scrollSurface === "transparent_to_solid" ||
-                                  selectedSection.layout.scrollSurface === "glass_to_solid"
-                                ? "solid"
-                                : currentInitialSurface);
-
-                            const currentShape: HeaderScrollShape =
-                              selectedSection.layout.scrollShape === "shrink_slim"
-                                ? "shrink_slim"
-                                : "keep";
-
-                            const isOverlayHero = selectedSection.layout.headerOverlay !== false;
-
-                            const SURFACE_OPTIONS: {
-                              id: HeaderSurfaceType;
-                              label: string;
-                              desc: string;
-                              icon: React.ReactNode;
-                            }[] = [
-                              {
-                                id: "transparent",
-                                label: "Transparente",
-                                desc: "100% invisível, mostra o fundo do hero",
-                                icon: <Eye className="w-3 h-3 text-zinc-400" />,
-                              },
-                              {
-                                id: "solid",
-                                label: "Sólido (100% Opaco)",
-                                desc: "Fundo preto denso sem vazamento de luz",
-                                icon: <Shield className="w-3 h-3 text-emerald-400" />,
-                              },
-                              {
-                                id: "glass",
-                                label: "Vidro Fosco (Glass)",
-                                desc: "Efeito translúcido com desfoque denso",
-                                icon: <Droplets className="w-3 h-3 text-sky-400" />,
-                              },
-                              {
-                                id: "bordered",
-                                label: "Borda Minimal",
-                                desc: "Fundo ultra sutil destacando contornos",
-                                icon: <Layers className="w-3 h-3 text-zinc-300" />,
-                              },
-                              {
-                                id: "3d_floating",
-                                label: "Elevado 3D",
-                                desc: "Sólido com sombra tridimensional",
-                                icon: <Box className="w-3 h-3 text-amber-400" />,
-                              },
-                              {
-                                id: "neon",
-                                label: "Neon Glow",
-                                desc: "Contorno luminoso na cor de destaque",
-                                icon: <Sparkles className="w-3 h-3 text-purple-400" />,
-                              },
-                            ];
-
-                            return (
-                              <div className="space-y-3 pt-3 border-t border-white/5">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                                    <Sparkles className="w-3.5 h-3.5 text-[#F4B400]" />
-                                    Comportamento ao Rolar (Scroll)
-                                  </label>
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#F4B400]/10 text-[#F4B400] font-mono border border-[#F4B400]/20">
-                                    Modular & Combinável
-                                  </span>
-                                </div>
-
-                                {/* 0. Sobreposição Hero / Fundo Contínuo */}
-                                <ModernToggle
-                                  label="Fundo Contínuo (Sobrepor ao Hero)"
-                                  description="O fundo e luz do Hero sobem atrás do header sem cortar conteúdo"
-                                  checked={isOverlayHero}
-                                  onChange={(checked) =>
-                                    updateSectionLayout(selectedSection.id, {
-                                      headerOverlay: checked,
-                                    })
-                                  }
-                                />
-
-                                {/* 1. Fixação & Visibilidade */}
-                                <div className="space-y-1.5 bg-zinc-950/60 p-2.5 rounded-xl border border-white/5">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1">
-                                      <Pin className="w-3 h-3 text-zinc-400" />
-                                      1. Fixação & Visibilidade
-                                    </span>
-                                    <span className="text-[10px] text-zinc-500 font-mono">
-                                      {currentVisibility === "fixed"
-                                        ? "Sempre Fixo"
-                                        : currentVisibility === "auto_hide"
-                                        ? "Auto-Hide (Suave)"
-                                        : "Rola Junto"}
-                                    </span>
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-1">
-                                    {[
-                                      {
-                                        id: "fixed" as const,
-                                        label: "Sempre Fixo",
-                                        desc: "Fixado no topo",
-                                        icon: <Pin className="w-3 h-3 text-[#F4B400]" />,
-                                      },
-                                      {
-                                        id: "auto_hide" as const,
-                                        label: "Auto-Hide",
-                                        desc: "Some ao descer / surge ao subir",
-                                        icon: <EyeOff className="w-3 h-3 text-sky-400" />,
-                                      },
-                                      {
-                                        id: "static" as const,
-                                        label: "Estático",
-                                        desc: "Acompanha página",
-                                        icon: <ArrowDown className="w-3 h-3 text-zinc-400" />,
-                                      },
-                                    ].map((item) => {
-                                      const isSel = currentVisibility === item.id;
-                                      return (
-                                        <button
-                                          key={item.id}
-                                          type="button"
-                                          onClick={() =>
-                                            updateSectionLayout(selectedSection.id, {
-                                              scrollVisibility: item.id,
-                                              sticky: item.id !== "static",
-                                            })
-                                          }
-                                          className={cn(
-                                            "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
-                                            isSel
-                                              ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm"
-                                              : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
-                                          )}
-                                        >
-                                          <div className="flex items-center justify-between w-full">
-                                            <span
-                                              className={cn(
-                                                "font-medium text-[11px] flex items-center gap-1",
-                                                isSel ? "text-[#F4B400]" : "text-zinc-200"
-                                              )}
-                                            >
-                                              {item.icon}
-                                              {item.label}
-                                            </span>
-                                            {isSel && (
-                                              <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
-                                            )}
-                                          </div>
-                                          <span className="text-[9px] text-zinc-500 line-clamp-1">
-                                            {item.desc}
-                                          </span>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-
-                                {/* 2. Superfície em 2 Estados (Simultâneos e Claros) */}
-                                <div className="space-y-3 bg-zinc-950/60 p-3 rounded-xl border border-white/5">
-                                  <div className="flex items-center justify-between pb-1 border-b border-white/5">
-                                    <span className="text-[11px] font-semibold text-zinc-200 flex items-center gap-1.5">
-                                      <Droplets className="w-3.5 h-3.5 text-sky-400" />
-                                      2. Superfície em 2 Estados
-                                    </span>
-                                    <div className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-900 border border-white/10">
-                                      <span className="text-[#F4B400] font-semibold">
-                                        {SURFACE_OPTIONS.find((o) => o.id === currentInitialSurface)?.label.split(" ")[0] || "Transparente"}
-                                      </span>
-                                      <span className="text-zinc-500">→</span>
-                                      <span className="text-sky-400 font-semibold">
-                                        {SURFACE_OPTIONS.find((o) => o.id === currentScrolledSurface)?.label.split(" ")[0] || "Sólido"}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Estado 1: No Topo (Inicial) */}
-                                  <div className="space-y-1.5">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-semibold text-[#F4B400] flex items-center gap-1 tracking-wide uppercase">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#F4B400]"></span>
-                                        Estado 1: No Topo (Inicial)
-                                      </span>
-                                      <span className="text-[9px] text-zinc-400 font-medium">
-                                        {SURFACE_OPTIONS.find((o) => o.id === currentInitialSurface)?.label}
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-1.5">
-                                      {SURFACE_OPTIONS.map((item) => {
-                                        const isSelected = currentInitialSurface === item.id;
-                                        return (
-                                          <button
-                                            key={`initial-${item.id}`}
-                                            type="button"
-                                            onClick={() => {
-                                              updateSectionLayout(selectedSection.id, {
-                                                headerSurfaceInitial: item.id,
-                                              });
-                                              if (item.id !== "transparent") {
-                                                updateSectionStyles(selectedSection.id, {
-                                                  surfaceVariant: item.id as SurfaceStyle,
-                                                });
-                                              }
-                                            }}
-                                            className={cn(
-                                              "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
-                                              isSelected
-                                                ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm ring-1 ring-[#F4B400]/30"
-                                                : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
-                                            )}
-                                          >
-                                            <div className="flex items-center justify-between w-full">
-                                              <span
-                                                className={cn(
-                                                  "font-medium text-[11px] flex items-center gap-1",
-                                                  isSelected ? "text-[#F4B400]" : "text-zinc-200"
-                                                )}
-                                              >
-                                                {item.icon}
-                                                {item.label}
-                                              </span>
-                                              {isSelected && (
-                                                <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
-                                              )}
-                                            </div>
-                                            <span className="text-[9px] text-zinc-500 line-clamp-1">
-                                              {item.desc}
-                                            </span>
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-
-                                  {/* Estado 2: Ao Rolar (Scrolled) */}
-                                  <div className="space-y-1.5 pt-2 border-t border-white/5">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-semibold text-sky-400 flex items-center gap-1 tracking-wide uppercase">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                                        Estado 2: Ao Rolar (Scrolled)
-                                      </span>
-                                      <span className="text-[9px] text-zinc-400 font-medium">
-                                        {SURFACE_OPTIONS.find((o) => o.id === currentScrolledSurface)?.label}
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-1.5">
-                                      {SURFACE_OPTIONS.map((item) => {
-                                        const isSelected = currentScrolledSurface === item.id;
-                                        return (
-                                          <button
-                                            key={`scrolled-${item.id}`}
-                                            type="button"
-                                            onClick={() => {
-                                              updateSectionLayout(selectedSection.id, {
-                                                headerSurfaceScrolled: item.id,
-                                              });
-                                            }}
-                                            className={cn(
-                                              "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
-                                              isSelected
-                                                ? "bg-sky-500/15 border-sky-400 text-white shadow-sm ring-1 ring-sky-400/30"
-                                                : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
-                                            )}
-                                          >
-                                            <div className="flex items-center justify-between w-full">
-                                              <span
-                                                className={cn(
-                                                  "font-medium text-[11px] flex items-center gap-1",
-                                                  isSelected ? "text-sky-400" : "text-zinc-200"
-                                                )}
-                                              >
-                                                {item.icon}
-                                                {item.label}
-                                              </span>
-                                              {isSelected && (
-                                                <Check className="w-3 h-3 text-sky-400 shrink-0" />
-                                              )}
-                                            </div>
-                                            <span className="text-[9px] text-zinc-500 line-clamp-1">
-                                              {item.desc}
-                                            </span>
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* 3. Altura ao Rolar (Slim) */}
-                                <div className="space-y-1.5 bg-zinc-950/60 p-2.5 rounded-xl border border-white/5">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[11px] font-medium text-zinc-300 flex items-center gap-1">
-                                      <Minimize2 className="w-3 h-3 text-emerald-400" />
-                                      3. Altura ao Rolar (Slim)
-                                    </span>
-                                    <span className="text-[10px] text-zinc-500 font-mono">
-                                      {currentShape === "shrink_slim" ? "Slim Ativo" : "Altura Fixa"}
-                                    </span>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-1.5">
-                                    {[
-                                      {
-                                        id: "keep" as const,
-                                        label: "Manter Altura",
-                                        desc: "Mantém dimensões originais intactas ao rolar",
-                                        icon: <Maximize2 className="w-3 h-3 text-zinc-400" />,
-                                      },
-                                      {
-                                        id: "shrink_slim" as const,
-                                        label: "Encolher ao Rolar (Slim)",
-                                        desc: "Encolhe ao descer e expande de volta ao subir",
-                                        icon: <Minimize2 className="w-3 h-3 text-emerald-400" />,
-                                      },
-                                    ].map((item) => {
-                                      const isSel = currentShape === item.id;
-                                      return (
-                                        <button
-                                          key={item.id}
-                                          type="button"
-                                          onClick={() =>
-                                            updateSectionLayout(selectedSection.id, {
-                                              scrollShape: item.id,
-                                            })
-                                          }
-                                          className={cn(
-                                            "p-2 rounded-lg border text-left flex flex-col gap-0.5 transition-all text-xs",
-                                            isSel
-                                              ? "bg-[#F4B400]/15 border-[#F4B400] text-white shadow-sm ring-1 ring-[#F4B400]/30"
-                                              : "bg-zinc-900/60 border-white/5 text-zinc-400 hover:text-white hover:border-white/10"
-                                          )}
-                                        >
-                                          <div className="flex items-center justify-between w-full">
-                                            <span
-                                              className={cn(
-                                                "font-medium text-[11px] flex items-center gap-1",
-                                                isSel ? "text-[#F4B400]" : "text-zinc-200"
-                                              )}
-                                            >
-                                              {item.icon}
-                                              {item.label}
-                                            </span>
-                                            {isSel && (
-                                              <Check className="w-3 h-3 text-[#F4B400] shrink-0" />
-                                            )}
-                                          </div>
-                                          <span className="text-[9px] text-zinc-500 line-clamp-1">
-                                            {item.desc}
-                                          </span>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })()}
                         </div>
 
                         {/* Altura da Seção (Min Height) */}
@@ -1836,49 +1838,11 @@ export default function StudioPage() {
                                 ]}
                               />
 
-                              {hasNoHorizontalFreedom ? (
-                                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1.5">
-                                  <div className="flex items-center gap-1.5 font-semibold text-amber-200">
-                                    <Info className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                                    <span>Bloco em Largura Total (100% da tela)</span>
-                                  </div>
-                                  <p className="text-[10px] text-amber-300/80 leading-relaxed">
-                                    Como o container e o componente ocupam 100% da largura, não há margem livre para mover. Para posicionar à <strong>Esquerda</strong> ou <strong>Direita</strong>:
-                                  </p>
-                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateSectionLayout(selectedSection.id, {
-                                          componentWidth: "auto",
-                                        })
-                                      }
-                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
-                                    >
-                                      Mudar para Cápsula (Auto)
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateSectionLayout(selectedSection.id, {
-                                          containerWidth: "boxed",
-                                        })
-                                      }
-                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
-                                    >
-                                      Mudar Container para Padrão
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-emerald-400" />
-                                  <span>
-                                    Margem lateral livre ativa (
-                                    {isSectionFull ? "Componente Cápsula/Bloco" : "Container Delimitado"}
-                                    ).
-                                  </span>
-                                </span>
+                              {hasNoHorizontalFreedom && (
+                                <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                                  <Info className="w-3 h-3 text-zinc-400 shrink-0" />
+                                  <span>Ocupando 100% da tela. Altere a largura do container ou componente para mover o bloco.</span>
+                                </p>
                               )}
                             </div>
                           );
@@ -1917,64 +1881,11 @@ export default function StudioPage() {
                                 ]}
                               />
 
-                              {isMinHeightAuto ? (
-                                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 space-y-1.5">
-                                  <div className="flex items-center gap-1.5 font-semibold text-amber-200">
-                                    <Info className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                                    <span>Altura em 'Auto' (ajustada exatamente ao conteúdo)</span>
-                                  </div>
-                                  <p className="text-[10px] text-amber-300/80 leading-relaxed">
-                                    Para que <strong>Topo</strong>, <strong>Centro</strong> ou <strong>Base</strong> tenham efeito visual, ative uma altura mínima:
-                                  </p>
-                                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateSectionLayout(selectedSection.id, {
-                                          minHeight: "screen",
-                                        })
-                                      }
-                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
-                                    >
-                                      Definir 100vh
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateSectionLayout(selectedSection.id, {
-                                          minHeight: "large",
-                                        })
-                                      }
-                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
-                                    >
-                                      Definir 75%
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        updateSectionLayout(selectedSection.id, {
-                                          minHeight: "half",
-                                        })
-                                      }
-                                      className="px-2 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-medium transition-colors"
-                                    >
-                                      Definir 50%
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-zinc-400 flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-emerald-400" />
-                                  <span>
-                                    Alinhando no espaço vertical livre de{" "}
-                                    {selectedSection.layout.minHeight === "screen"
-                                      ? "100vh"
-                                      : selectedSection.layout.minHeight === "large"
-                                      ? "75% da tela"
-                                      : "50% da tela"}
-                                    .
-                                  </span>
-                                </span>
+                              {isMinHeightAuto && (
+                                <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                                  <Info className="w-3 h-3 text-zinc-400 shrink-0" />
+                                  <span>Altura em automático. Defina uma Altura Mínima (100vh, 75% ou 50%) para mover verticalmente.</span>
+                                </p>
                               )}
                             </div>
                           );
@@ -2354,59 +2265,6 @@ export default function StudioPage() {
                             </span>
                           </div>
 
-                          {/* Direção do Fluxo (Orientação: Coluna, Linha ou Responsivo) */}
-                          <div className="space-y-1.5 pt-2 border-t border-white/5">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-semibold text-zinc-300 block">
-                                Orientação do Container (Fluxo)
-                              </label>
-                              <span className="text-[10px] text-zinc-500">
-                                Disposição dos elementos
-                              </span>
-                            </div>
-                            <SegmentedControl<LayoutDirection>
-                              value={
-                                selectedSection.layout.direction ||
-                                (selectedSection.type.startsWith("header.")
-                                  ? "row"
-                                  : "col")
-                              }
-                              onChange={(dir) =>
-                                updateSectionLayout(selectedSection.id, {
-                                  direction: dir,
-                                })
-                              }
-                              columns={3}
-                              size="sm"
-                              options={[
-                                { value: "col", label: "Coluna", icon: <StretchVertical className="w-3 h-3" /> },
-                                { value: "row", label: "Linha", icon: <StretchHorizontal className="w-3 h-3" /> },
-                                { value: "responsive", label: "Responsivo", icon: <Smartphone className="w-3 h-3" /> },
-                              ]}
-                            />
-                            <span className="text-[10px] text-zinc-500 block">
-                              {selectedSection.layout.direction === "responsive"
-                                ? "Coluna no mobile (vertical) e linha no desktop (horizontal)."
-                                : selectedSection.layout.direction === "col"
-                                ? "Empilhamento vertical (bloco/card de cima para baixo)."
-                                : "Barra ou linha horizontal dos elementos."}
-                            </span>
-                          </div>
-
-                          {/* Inverter Ordem dos Elementos */}
-                          <div className="pt-1">
-                            <ModernToggle
-                              label="Inverter Ordem dos Elementos"
-                              description="Inverte a sequência horizontal ou vertical dos blocos"
-                              checked={Boolean(selectedSection.layout.reverse)}
-                              onChange={(rev) =>
-                                updateSectionLayout(selectedSection.id, {
-                                  reverse: rev,
-                                })
-                              }
-                            />
-                          </div>
-
                           {/* Espessura Interna Vertical (Padding Y Interno) */}
                           <div className="space-y-1.5 pt-2 border-t border-white/5">
                             <div className="flex items-center justify-between">
@@ -2471,65 +2329,9 @@ export default function StudioPage() {
                                 { value: "spacious", label: "Amplo" },
                               ]}
                             />
-                            {(() => {
-                              const isCol = selectedSection.layout.direction === "col";
-                              const alignItems = selectedSection.layout.alignItems || "center";
-                              const isCentered = alignItems === "center";
-                              const isAuto = (selectedSection.layout.componentWidth || "full") === "auto";
-
-                              if (!isCol) {
-                                return (
-                                  <span className="text-[10px] text-zinc-500 block">
-                                    Em Linha: afasta os elementos das pontas esquerda e direita do card/barra.
-                                  </span>
-                                );
-                              }
-
-                              if (isAuto) {
-                                return (
-                                  <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-                                    <Check className="w-3 h-3" />
-                                    <span>Em Cápsula: o Padding X define a largura e o respiro lateral do card.</span>
-                                  </span>
-                                );
-                              }
-
-                              if (isCentered) {
-                                return (
-                                  <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 space-y-1.5">
-                                    <p className="flex items-start gap-1.5">
-                                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-400" />
-                                      <span>
-                                        <strong>Aviso de Modo Coluna:</strong> Como os elementos estão centralizados no meio da tela, o Padding X só terá efeito visível quando os elementos forem alinhados a um canto ou esticados na <strong>Camada 3</strong> (ou em largura <em>Cápsula</em>).
-                                      </span>
-                                    </p>
-                                    <div className="flex items-center gap-1.5 pt-0.5 pl-5">
-                                      <button
-                                        type="button"
-                                        onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "start" })}
-                                        className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
-                                      >
-                                        Alinhar à Esquerda
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "stretch" })}
-                                        className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
-                                      >
-                                        Esticar Largura
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-                                  <Check className="w-3 h-3" />
-                                  <span>Elementos alinhados: o Padding X define o recuo lateral exato das bordas.</span>
-                                </span>
-                              );
-                            })()}
+                            <span className="text-[10px] text-zinc-500 block">
+                              Afasta os elementos internos das bordas laterais do card ou barra.
+                            </span>
                           </div>
 
                         {/* Acabamento da Superfície (Card) */}
@@ -3005,11 +2807,64 @@ export default function StudioPage() {
 
                           return (
                             <div className="space-y-4">
+                              {/* 0. Orientação do Fluxo (Direção) */}
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-semibold text-zinc-300 block">
+                                    Orientação do Fluxo (Direção)
+                                  </label>
+                                  <span className="text-[10px] text-zinc-500">
+                                    Disposição dos elementos
+                                  </span>
+                                </div>
+                                <SegmentedControl<LayoutDirection>
+                                  value={
+                                    selectedSection.layout.direction ||
+                                    (selectedSection.type.startsWith("header.")
+                                      ? "row"
+                                      : "col")
+                                  }
+                                  onChange={(dir) =>
+                                    updateSectionLayout(selectedSection.id, {
+                                      direction: dir,
+                                    })
+                                  }
+                                  columns={3}
+                                  size="sm"
+                                  options={[
+                                    { value: "row", label: "Linha", icon: <StretchHorizontal className="w-3 h-3" /> },
+                                    { value: "col", label: "Coluna", icon: <StretchVertical className="w-3 h-3" /> },
+                                    { value: "responsive", label: "Responsivo", icon: <Smartphone className="w-3 h-3" /> },
+                                  ]}
+                                />
+                                <span className="text-[10px] text-zinc-500 block">
+                                  {direction === "responsive"
+                                    ? "Coluna no mobile e linha no desktop."
+                                    : direction === "col"
+                                    ? "Empilhamento vertical (de cima para baixo)."
+                                    : "Disposição horizontal dos elementos na mesma linha."}
+                                </span>
+                              </div>
+
+                              {/* Inverter Ordem dos Elementos */}
+                              <div className="pt-1 pb-1">
+                                <ModernToggle
+                                  label="Inverter Ordem dos Elementos"
+                                  description="Inverte a sequência horizontal ou vertical dos blocos"
+                                  checked={Boolean(selectedSection.layout.reverse)}
+                                  onChange={(rev) =>
+                                    updateSectionLayout(selectedSection.id, {
+                                      reverse: rev,
+                                    })
+                                  }
+                                />
+                              </div>
+
                               {/* SE FOR COLUNA: O eixo X é controlado por alignItems (Cross-Axis) e o eixo Y por distribution (Main-Axis) */}
                               {isCol ? (
                                 <>
                                   {/* 1. Alinhamento Horizontal (Eixo X) */}
-                                  <div className="space-y-1.5">
+                                  <div className="space-y-1.5 pt-2 border-t border-white/5">
                                     <div className="flex items-center justify-between">
                                       <label className="text-xs font-semibold text-zinc-300 block">
                                         Alinhamento Horizontal (Eixo X)
@@ -3034,35 +2889,6 @@ export default function StudioPage() {
                                         { value: "stretch", label: "Esticar", icon: <StretchHorizontal className="w-3 h-3" /> },
                                       ]}
                                     />
-                                    {/* Dica Contextual e Botões de Ação Rápida */}
-                                    {(selectedSection.layout.alignItems || "center") === "center" ? (
-                                      <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90 space-y-1.5">
-                                        <p>
-                                          ℹ️ Itens centralizados no eixo X. Alinhe à Esquerda, Direita ou Esticar para que o <strong>Respiro Lateral (Padding X)</strong> delimite o recuo das margens.
-                                        </p>
-                                        <div className="flex items-center gap-1.5 pt-0.5">
-                                          <button
-                                            type="button"
-                                            onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "start" })}
-                                            className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
-                                          >
-                                            Alinhar à Esquerda
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => updateSectionLayout(selectedSection.id, { alignItems: "stretch" })}
-                                            className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold transition-colors"
-                                          >
-                                            Esticar Largura
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-                                        <Check className="w-3 h-3" />
-                                        <span>Alinhamento ativo: o Padding X define o recuo exato entre o conteúdo e a parede do card.</span>
-                                      </span>
-                                    )}
                                   </div>
 
                                   {/* 2. Distribuição Vertical (Eixo Y) */}
