@@ -37,7 +37,7 @@ export const ArrayFieldEditor: React.FC<ArrayFieldEditorProps> = ({
   onChange,
   defaultAccentColor,
 }) => {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const handleAddItem = () => {
     const newItem = field.defaultNewItem

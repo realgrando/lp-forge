@@ -161,10 +161,12 @@ export default function StudioPage() {
     "content"
   );
   const [openDesignAccordion, setOpenDesignAccordion] = useState<string | null>(null);
+  const [openContentAccordion, setOpenContentAccordion] = useState<string | null>(null);
 
-  // Iniciar acordeões de design sempre fechados ao trocar de seção selecionada
+  // Iniciar acordeões sempre fechados ao trocar de seção selecionada
   useEffect(() => {
     setOpenDesignAccordion(null);
+    setOpenContentAccordion(null);
   }, [selectedSectionId]);
 
   const toggleDesignAccordion = (key: string) => {
@@ -176,6 +178,10 @@ export default function StudioPage() {
       else setActiveInspectorLayer(null);
       return next;
     });
+  };
+
+  const toggleContentAccordion = (key: string) => {
+    setOpenContentAccordion((prev) => (prev === key ? null : key));
   };
 
   const [showJsonModal, setShowJsonModal] = useState(false);
@@ -994,7 +1000,24 @@ export default function StudioPage() {
                   );
 
                   return (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
+                      {/* Barra de controle rápido e status das seções de conteúdo */}
+                      <div className="flex items-center justify-between px-1 text-xs">
+                        <div className="flex items-center gap-1.5 text-zinc-400">
+                          <span className="font-semibold text-zinc-300">Conteúdo & Textos</span>
+                          <span className="text-[10px] text-zinc-500">• 1 por vez</span>
+                        </div>
+                        {openContentAccordion !== null && (
+                          <button
+                            type="button"
+                            onClick={() => setOpenContentAccordion(null)}
+                            className="text-[11px] text-amber-400/90 hover:text-amber-300 font-medium hover:underline transition-colors"
+                          >
+                            Recolher tudo
+                          </button>
+                        )}
+                      </div>
+
                       {/* 1. Elementos Opcionais da Seção */}
                       {selectedDefinition.toggleableElements &&
                         selectedDefinition.toggleableElements.length > 0 && (
@@ -1003,7 +1026,8 @@ export default function StudioPage() {
                             subtitle="Ligue ou oculte sub-elementos da seção"
                             icon={Eye}
                             badge={selectedDefinition.toggleableElements.length}
-                            defaultOpen={false}
+                            isOpen={openContentAccordion === "visibility"}
+                            onToggle={() => toggleContentAccordion("visibility")}
                           >
                             <div className="grid grid-cols-2 gap-2">
                               {selectedDefinition.toggleableElements.map((el) => {
@@ -1035,7 +1059,8 @@ export default function StudioPage() {
                           subtitle="Títulos, subtítulos, descrições e mídias"
                           icon={Type}
                           badge={contentFields.length}
-                          defaultOpen={true}
+                          isOpen={openContentAccordion === "texts"}
+                          onToggle={() => toggleContentAccordion("texts")}
                         >
                           <div className="space-y-3.5">
                             {contentFields.map((field) => {
@@ -1352,7 +1377,8 @@ export default function StudioPage() {
                           subtitle="Textos, links e tipografia dos botões"
                           icon={Sparkles}
                           badge={buttonFields.length}
-                          defaultOpen={true}
+                          isOpen={openContentAccordion === "buttons"}
+                          onToggle={() => toggleContentAccordion("buttons")}
                         >
                           <div className="space-y-3">
                             {buttonFields.map((field) => {
@@ -1420,7 +1446,8 @@ export default function StudioPage() {
                           subtitle="Cards repetíveis, itens e listas dinâmicas"
                           icon={Layers}
                           badge={arrayFields.length}
-                          defaultOpen={true}
+                          isOpen={openContentAccordion === "arrays"}
+                          onToggle={() => toggleContentAccordion("arrays")}
                         >
                           <div className="space-y-4">
                             {arrayFields.map((field) => {
