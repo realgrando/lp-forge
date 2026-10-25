@@ -625,12 +625,13 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
 
             {/* CTA Desktop */}
             {hasCta && (
-              <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block")}>
+              <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block", "shrink-0")}>
                 <SmartButton
                   button={content.ctaButton}
                   elementKey="ctaButton"
                   styles={styles}
                   theme={theme}
+                  context="header"
                 />
               </div>
             )}
@@ -691,6 +692,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
                   elementKey="ctaButton"
                   styles={styles}
                   theme={theme}
+                  context="header"
                 />
               </div>
             )}

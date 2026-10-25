@@ -5,26 +5,45 @@ import { cn, getRadiusClass } from "@/lib/utils";
 import { ButtonConfig, SectionStyles, ThemeConfig } from "@/types/site";
 import { DynamicIcon } from "./DynamicIcon";
 
+export type ButtonContext = "default" | "header" | "hero" | "card" | "compact";
+
 interface SmartButtonProps {
   button?: ButtonConfig;
   elementKey?: string;
   styles?: SectionStyles;
   theme: ThemeConfig;
   className?: string;
+  context?: ButtonContext;
 }
 
-const SIZE_CLASSES: Record<NonNullable<ButtonConfig["size"]>, string> = {
+const DEFAULT_SIZE_CLASSES: Record<NonNullable<ButtonConfig["size"]>, string> = {
   sm: "px-6 sm:px-7 py-2.5 sm:py-3 text-xs sm:text-sm gap-2 font-semibold tracking-wide min-h-[42px]",
   md: "px-8 sm:px-10 py-3.5 sm:py-4 text-sm sm:text-base gap-2.5 font-bold tracking-wide min-h-[50px]",
   lg: "px-10 sm:px-14 py-4 sm:py-5 text-base sm:text-lg gap-3 font-extrabold tracking-tight min-h-[56px]",
   xl: "px-12 sm:px-18 py-5 sm:py-6 text-lg sm:text-xl gap-3.5 font-black tracking-tight min-h-[64px]",
 };
 
-const ICON_SIZE_CLASSES: Record<NonNullable<ButtonConfig["size"]>, string> = {
+const DEFAULT_ICON_SIZE_CLASSES: Record<NonNullable<ButtonConfig["size"]>, string> = {
   sm: "w-4 h-4 shrink-0",
   md: "w-[18px] h-[18px] shrink-0",
   lg: "w-5 h-5 shrink-0",
   xl: "w-6 h-6 shrink-0",
+};
+
+// Escala dimensional proporcional adaptada para Header / Navbar
+// (Permite tamanhos L e XL com destaque visual sem estourar a altura nem vazar das laterais da barra)
+const HEADER_SIZE_CLASSES: Record<NonNullable<ButtonConfig["size"]>, string> = {
+  sm: "px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs gap-1.5 font-semibold tracking-normal min-h-[34px] sm:min-h-[36px]",
+  md: "px-4.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm gap-2 font-bold tracking-normal min-h-[38px] sm:min-h-[40px]",
+  lg: "px-5 sm:px-6 py-2 sm:py-2.5 text-sm gap-2 font-bold tracking-normal min-h-[42px] sm:min-h-[44px]",
+  xl: "px-6 sm:px-7 py-2.5 sm:py-3 text-sm sm:text-base gap-2.5 font-extrabold tracking-tight min-h-[46px] sm:min-h-[48px]",
+};
+
+const HEADER_ICON_SIZE_CLASSES: Record<NonNullable<ButtonConfig["size"]>, string> = {
+  sm: "w-3.5 h-3.5 shrink-0",
+  md: "w-4 h-4 shrink-0",
+  lg: "w-4 h-4 sm:w-4.5 sm:h-4.5 shrink-0",
+  xl: "w-4.5 h-4.5 shrink-0",
 };
 
 /**
@@ -60,10 +79,15 @@ export const SmartButton: React.FC<SmartButtonProps> = ({
   styles,
   theme,
   className,
+  context = "default",
 }) => {
   if (!button || !button.enabled) return null;
   if (elementKey && styles?.hiddenElements?.[elementKey]) return null;
   if (!button.text) return null;
+
+  const isHeader = context === "header";
+  const sizeMap = isHeader ? HEADER_SIZE_CLASSES : DEFAULT_SIZE_CLASSES;
+  const iconSizeMap = isHeader ? HEADER_ICON_SIZE_CLASSES : DEFAULT_ICON_SIZE_CLASSES;
 
   const isSecondary = elementKey === "secondaryCta";
   const defaultBg = isSecondary
@@ -162,7 +186,7 @@ export const SmartButton: React.FC<SmartButtonProps> = ({
       }}
       className={cn(
         "inline-flex items-center justify-center font-bold transition-all duration-200 border text-center select-none",
-        SIZE_CLASSES[size],
+        sizeMap[size],
         getRadiusClass(radius),
         button.fullWidth && "w-full",
         override?.fontWeight,
@@ -181,7 +205,7 @@ export const SmartButton: React.FC<SmartButtonProps> = ({
         <span className="inline-flex items-center justify-center shrink-0">
           <DynamicIcon
             name={button.iconName}
-            className={ICON_SIZE_CLASSES[size]}
+            className={iconSizeMap[size]}
             strokeWidth={2.25}
           />
         </span>
@@ -191,7 +215,7 @@ export const SmartButton: React.FC<SmartButtonProps> = ({
         <span className="inline-flex items-center justify-center shrink-0">
           <DynamicIcon
             name={button.iconName}
-            className={ICON_SIZE_CLASSES[size]}
+            className={iconSizeMap[size]}
             strokeWidth={2.25}
           />
         </span>

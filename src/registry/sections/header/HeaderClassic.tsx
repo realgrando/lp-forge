@@ -494,12 +494,13 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
 
           {/* CTA no desktop (ou mobile se não houver menu hamburger) */}
           {hasCta && (
-            <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block")}>
+            <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block", "shrink-0")}>
               <SmartButton
                 button={content.ctaButton}
                 elementKey="ctaButton"
                 styles={styles}
                 theme={theme}
+                context="header"
               />
             </div>
           )}
@@ -569,6 +570,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
                 elementKey="ctaButton"
                 styles={styles}
                 theme={theme}
+                context="header"
                 className="w-full text-center"
               />
             </div>

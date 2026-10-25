@@ -419,6 +419,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
                   elementKey="ctaButton"
                   styles={styles}
                   theme={theme}
+                  context="header"
                 />
               )}
             </div>
@@ -463,6 +464,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
                 elementKey="ctaButton"
                 styles={styles}
                 theme={theme}
+                context="header"
               />
             )}
 
@@ -531,6 +533,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
                   elementKey="ctaButton"
                   styles={styles}
                   theme={theme}
+                  context="header"
                 />
               </div>
             )}
