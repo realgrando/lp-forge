@@ -61,6 +61,10 @@
     border-color: var(--border);
   }
 
+  img, video {
+    max-width: 100%;
+  }
+
   option {
     background-color: #18181B;
     color: #FAFAFA;

@@ -30,12 +30,13 @@ function buildSectionInstance(
 ): SectionNode {
   const def = getSectionDefinition(typeId)!;
   const isHeader = typeId.startsWith("header.");
+  const isHero = typeId.startsWith("hero.");
   const defLayout = def.defaultData.layout || {};
   return {
     id: generateId("sec"),
     type: def.id,
     layout: {
-      containerWidth: forceContainer || defLayout.containerWidth || (isHeader ? "full" : "boxed"),
+      containerWidth: forceContainer || defLayout.containerWidth || (isHeader || isHero ? "full" : "boxed"),
       containerAlignX: defLayout.containerAlignX || "center",
       containerAlignY: defLayout.containerAlignY || "center",
       minHeight: defLayout.minHeight || "auto",

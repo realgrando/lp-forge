@@ -138,7 +138,7 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
       paddingY: "spacious",
       paddingInner: "none",
       paddingX: "normal",
-      containerWidth: "boxed",
+      containerWidth: "full",
       minHeight: "auto",
       contentMaxWidth: "full",
       distribution: "center",
@@ -356,10 +356,7 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
         {!isHidden("bgImage") && content.bgImage && (
           <div
             className={cn(
-              "absolute inset-0 z-0 pointer-events-none overflow-hidden",
-              isCardMode
-                ? "rounded-[inherit]"
-                : "-mx-6 md:-mx-12 lg:-mx-20 -my-16 md:-my-28"
+              "absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-[inherit]"
             )}
           >
             <img

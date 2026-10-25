@@ -1690,7 +1690,8 @@ export default function StudioPage() {
                           <SegmentedControl<ContainerWidth>
                             value={
                               selectedSection.layout.containerWidth ||
-                              (selectedSection.type.startsWith("header.")
+                              (selectedSection.type.startsWith("header.") ||
+                              selectedSection.type.startsWith("hero.")
                                 ? "full"
                                 : "boxed")
                             }
@@ -1742,7 +1743,10 @@ export default function StudioPage() {
                         {(() => {
                           const isSectionFull =
                             (selectedSection.layout.containerWidth ||
-                              (selectedSection.type.startsWith("header.") ? "full" : "boxed")) ===
+                              (selectedSection.type.startsWith("header.") ||
+                              selectedSection.type.startsWith("hero.")
+                                ? "full"
+                                : "boxed")) ===
                             "full";
                           const isComponentFull =
                             (selectedSection.layout.componentWidth ||

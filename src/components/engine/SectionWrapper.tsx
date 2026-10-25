@@ -224,9 +224,13 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
     ? layout.headerOverlay !== false
     : isFirstAfterHeader && headerOverlayEnabled;
   const isHero = section.type.startsWith("hero.");
+  const hasBgImage = Boolean(styles.bgImage);
+  // Headers e Heros operam sempre em Full-Width na macro-camada de seção para garantir
+  // que imagens de fundo, gradientes e ambient glow cubram 100% da tela (sem bordas/vazios pretos laterais).
+  // A contenção visual é tratada harmonicamente pelo componentWidth e contentMaxWidth.
   const effectiveContainerWidth: ContainerWidth =
-    layout.containerWidth || (isHeader ? "full" : "boxed");
-  const isFullWidth = effectiveContainerWidth === "full";
+    layout.containerWidth || (isHeader || isHero ? "full" : "boxed");
+  const isFullWidth = isHeader || isHero || hasBgImage || effectiveContainerWidth === "full";
   const defaultPaddingY: PaddingScale = isHeader ? "none" : "normal";
   const effectivePaddingY = layout.paddingY || defaultPaddingY;
 

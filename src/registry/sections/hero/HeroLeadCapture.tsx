@@ -158,7 +158,7 @@ export const HeroLeadCaptureSection = createSection<HeroLeadCaptureContent>({
       paddingY: "spacious",
       paddingInner: "none",
       paddingX: "normal",
-      containerWidth: "boxed",
+      containerWidth: "full",
       direction: "responsive",
       gap: "normal",
       reverse: false,

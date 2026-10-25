@@ -120,7 +120,7 @@
               "paddingY": "normal",
               "paddingInner": "none",
               "paddingX": "normal",
-              "containerWidth": "boxed",
+              "containerWidth": "full",
               "minHeight": "auto",
               "contentMaxWidth": "full",
               "distribution": "center",

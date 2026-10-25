@@ -115,7 +115,7 @@ export const HeroCenteredSpotlightSection = createSection<HeroCenteredContent>({
       paddingY: "spacious",
       paddingInner: "none",
       paddingX: "normal",
-      containerWidth: "boxed",
+      containerWidth: "full",
       distribution: "center",
       alignItems: "center",
       gap: "normal",

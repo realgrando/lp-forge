@@ -3,18 +3,17 @@
 import React, { useState, useEffect } from "react";
 import { SiteDocument, DeviceViewport } from "@/types/site";
 import { DynamicRenderer } from "@/components/engine/DynamicRenderer";
+import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import {
   Monitor,
   Tablet,
   Smartphone,
-  Maximize2,
-  Minimize2,
   ArrowLeft,
-  Sparkles,
   Layers,
   ChevronDown,
   ChevronUp,
-  RefreshCw,
+  SmartphoneNfc,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,9 +22,8 @@ const CHANNEL_NAME = "lp_forge_preview_sync";
 
 export default function PreviewPage() {
   const [doc, setDoc] = useState<SiteDocument | null>(null);
-  const [previewViewport, setPreviewViewport] = useState<
-    "full" | DeviceViewport
-  >("full");
+  const [viewport, setViewport] = useState<DeviceViewport>("desktop");
+  const [mobileScrollMode, setMobileScrollMode] = useState<"frame" | "expanded">("frame");
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string>("");
 
@@ -38,6 +36,9 @@ export default function PreviewPage() {
           const parsed = JSON.parse(saved);
           if (parsed && Array.isArray(parsed.sections)) {
             setDoc(parsed);
+            if (parsed.meta?.mode === "LINKTREE") {
+              setViewport("mobile");
+            }
             setLastSyncTime(new Date().toLocaleTimeString());
           }
         }
@@ -80,6 +81,21 @@ export default function PreviewPage() {
     };
   }, []);
 
+  // Interceptador de âncoras locais no modo desktop (#sobre, #contato)
+  const handleDesktopAnchorClick = (e: React.MouseEvent) => {
+    const target = (e.target as HTMLElement).closest("a");
+    if (!target) return;
+    const href = target.getAttribute("href");
+    if (href && href.startsWith("#") && href.length > 1) {
+      e.preventDefault();
+      const anchorId = href.slice(1);
+      const targetEl = document.getElementById(anchorId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
   if (!doc) {
     return (
       <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col items-center justify-center p-6 text-center">
@@ -102,12 +118,9 @@ export default function PreviewPage() {
   }
 
   const isMobileMode = doc.meta.mode === "LINKTREE";
-  const effectiveViewport = isMobileMode
-    ? "mobile"
-    : previewViewport;
 
   return (
-    <div className="min-h-screen w-full bg-[#09090B] text-zinc-100 flex flex-col relative">
+    <div className="min-h-screen w-full bg-[#09090B] text-zinc-100 flex flex-col relative selection:bg-[#F4B400]/30 selection:text-white">
       {/* FLOATING CONTROL BAR (Recolhível para não obstruir Headers e Navbars) */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300">
         <div
@@ -128,10 +141,19 @@ export default function PreviewPage() {
             </button>
           ) : (
             <div className="flex items-center gap-3">
+              {/* Botão de Retorno ao Studio */}
+              <a
+                href="/"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Voltar ao Studio"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </a>
+
               {/* Identificação & Status */}
-              <div className="flex items-center gap-2 pl-2 pr-1 border-r border-white/10">
+              <div className="flex items-center gap-2 pl-1 pr-2 border-r border-white/10">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold text-white max-w-[160px] truncate">
+                <span className="text-xs font-bold text-white max-w-[150px] truncate">
                   {doc.meta.name || "Site Preview"}
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-[#F4B400] uppercase font-semibold">
@@ -139,66 +161,79 @@ export default function PreviewPage() {
                 </span>
               </div>
 
-              {/* Seletor de Viewport (apenas se for Landing Page) */}
-              {!isMobileMode && (
-                <div className="flex items-center bg-zinc-900 p-0.5 rounded-xl border border-white/5">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewViewport("full")}
-                    title="100% Tela Cheia Real"
-                    className={cn(
-                      "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all",
-                      previewViewport === "full"
-                        ? "bg-[#F4B400] text-zinc-950 shadow-sm"
-                        : "text-zinc-400 hover:text-white"
-                    )}
-                  >
-                    <Maximize2 className="w-3 h-3" />
-                    <span>100% Real</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewViewport("desktop")}
-                    title="Desktop Fixo (1280px)"
-                    className={cn(
-                      "p-1.5 rounded-lg transition-colors",
-                      previewViewport === "desktop"
-                        ? "bg-[#F4B400] text-zinc-950"
-                        : "text-zinc-400 hover:text-white"
-                    )}
-                  >
-                    <Monitor className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewViewport("tablet")}
-                    title="Tablet (768px)"
-                    className={cn(
-                      "p-1.5 rounded-lg transition-colors",
-                      previewViewport === "tablet"
-                        ? "bg-[#F4B400] text-zinc-950"
-                        : "text-zinc-400 hover:text-white"
-                    )}
-                  >
-                    <Tablet className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewViewport("mobile")}
-                    title="Mobile (390px)"
-                    className={cn(
-                      "p-1.5 rounded-lg transition-colors",
-                      previewViewport === "mobile"
-                        ? "bg-[#F4B400] text-zinc-950"
-                        : "text-zinc-400 hover:text-white"
-                    )}
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              {/* Seletor de Viewport Universal */}
+              <div className="flex items-center bg-zinc-900 p-0.5 rounded-xl border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setViewport("desktop")}
+                  title="Desktop (100% Real - Tela Cheia)"
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all",
+                    viewport === "desktop"
+                      ? "bg-[#F4B400] text-zinc-950 shadow-sm"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>Desktop 100%</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewport("tablet")}
+                  title="Tablet (768px - Media Queries Nativas)"
+                  className={cn(
+                    "p-1.5 rounded-lg transition-colors",
+                    viewport === "tablet"
+                      ? "bg-[#F4B400] text-zinc-950"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  <Tablet className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewport("mobile")}
+                  title="Mobile (412px - Media Queries Nativas)"
+                  className={cn(
+                    "p-1.5 rounded-lg transition-colors",
+                    viewport === "mobile"
+                      ? "bg-[#F4B400] text-zinc-950"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Toggle de Modo de Rolagem quando em Tablet / Mobile */}
+              {(viewport === "mobile" || viewport === "tablet") && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileScrollMode((m) => (m === "frame" ? "expanded" : "frame"))
+                  }
+                  title={
+                    mobileScrollMode === "frame"
+                      ? "Rolagem interna do aparelho (clique para expandir com a página)"
+                      : "Rolagem expandida com a página (clique para fixar no frame)"
+                  }
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-semibold text-zinc-300 hover:text-white transition-colors"
+                >
+                  {mobileScrollMode === "frame" ? (
+                    <>
+                      <SmartphoneNfc className="w-3 h-3 text-[#F4B400]" />
+                      <span>Frame</span>
+                    </>
+                  ) : (
+                    <>
+                      <ScrollText className="w-3 h-3 text-[#F4B400]" />
+                      <span>Expandido</span>
+                    </>
+                  )}
+                </button>
               )}
 
-              {/* Botão de Fechar / Recolher Toolbar */}
+              {/* Botão de Recolher Toolbar */}
               <div className="flex items-center gap-1 pl-1">
                 <button
                   type="button"
@@ -215,36 +250,64 @@ export default function PreviewPage() {
       </div>
 
       {/* RENDERIZADOR DO SITE REAL */}
-      <div
-        className={cn(
-          "w-full flex-1 flex justify-center transition-all duration-300",
-          effectiveViewport === "full"
-            ? "p-0"
-            : "py-16 px-4 bg-[#09090B] items-start"
-        )}
-      >
+      {viewport === "desktop" ? (
+        /* MODO DESKTOP REAL: 100% TELA CHEIA, EDGE-TO-EDGE, ROLAGEM NATURAL DA PÁGINA */
         <div
-          className={cn(
-            "transition-all duration-300",
-            effectiveViewport === "full"
-              ? "w-full min-h-screen"
-              : effectiveViewport === "desktop"
-              ? "w-[1280px] min-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-zinc-950"
-              : effectiveViewport === "tablet"
-              ? "w-[768px] min-h-[900px] rounded-2xl border border-white/10 shadow-2xl overflow-hidden bg-zinc-950"
-              : "w-[412px] min-h-[780px] rounded-[3rem] border-[10px] border-zinc-800 shadow-[0_25px_70px_rgba(0,0,0,0.75)] overflow-hidden bg-zinc-950"
-          )}
+          className="w-full min-h-screen bg-[#09090B] text-zinc-100 flex flex-col"
+          onClickCapture={handleDesktopAnchorClick}
         >
-          {/* Notch se estiver no frame mobile simulado */}
-          {effectiveViewport === "mobile" && (
-            <div className="bg-zinc-950 h-7 w-full flex items-center justify-center border-b border-white/5">
-              <div className="w-24 h-3.5 rounded-full bg-zinc-900 border border-white/5" />
-            </div>
-          )}
-
           <DynamicRenderer document={doc} isEditor={false} />
         </div>
-      </div>
+      ) : viewport === "tablet" ? (
+        /* MODO TABLET (768px): SIMULADOR ISOLADO COM PREVIEWFRAME (IFRAME) PARA DISPARAR MEDIA QUERIES REAIS */
+        <div className="w-full min-h-screen bg-[#09090B] py-16 px-4 flex justify-center items-start">
+          <div
+            className={cn(
+              "w-[768px] rounded-2xl border border-white/10 shadow-[0_25px_70px_rgba(0,0,0,0.75)] overflow-hidden bg-zinc-950 flex flex-col transition-all",
+              mobileScrollMode === "expanded"
+                ? "min-h-[900px]"
+                : "h-[920px] max-h-[88vh]"
+            )}
+          >
+            <div className="flex-1 w-full h-full relative overflow-hidden">
+              <PreviewFrame
+                autoHeight={mobileScrollMode === "expanded"}
+                className="w-full h-full"
+              >
+                <DynamicRenderer document={doc} isEditor={false} />
+              </PreviewFrame>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* MODO SMARTPHONE (412px): SIMULADOR ISOLADO COM PREVIEWFRAME (IFRAME) E NOTCH REAL */
+        <div className="w-full min-h-screen bg-[#09090B] py-16 px-4 flex justify-center items-start">
+          <div
+            className={cn(
+              "w-[412px] rounded-[3rem] border-[10px] border-zinc-800 shadow-[0_25px_70px_rgba(0,0,0,0.75)] overflow-hidden bg-zinc-950 flex flex-col transition-all",
+              mobileScrollMode === "expanded"
+                ? "min-h-[780px]"
+                : "h-[850px] max-h-[88vh]"
+            )}
+          >
+            {/* Notch superior simulado do aparelho */}
+            <div className="bg-zinc-950 h-7 w-full flex items-center justify-between px-6 border-b border-white/5 shrink-0 z-20">
+              <span className="text-[10px] font-mono font-bold text-zinc-500">9:41</span>
+              <div className="w-20 h-3.5 rounded-full bg-zinc-900 border border-white/5" />
+              <div className="w-3.5 h-2 rounded-xs border border-zinc-500/80" />
+            </div>
+
+            <div className="flex-1 w-full h-full relative overflow-hidden">
+              <PreviewFrame
+                autoHeight={mobileScrollMode === "expanded"}
+                className="w-full h-full"
+              >
+                <DynamicRenderer document={doc} isEditor={false} />
+              </PreviewFrame>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
