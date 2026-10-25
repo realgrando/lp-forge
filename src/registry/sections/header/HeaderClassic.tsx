@@ -14,7 +14,13 @@ import {
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import {
+  cn,
+  getHeaderSurfaceClasses,
+  getLogoRadiusClass,
+  getRadiusClass,
+  getSurfaceClasses,
+} from "@/lib/utils";
 import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
 import { useStudioStore } from "@/store/useStudioStore";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
@@ -22,6 +28,7 @@ import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 const headerClassicSchema = z.object({
   brandName: z.string(),
   logoImageUrl: z.string().optional(),
+  logoImageRadius: z.enum(["none", "sm", "md", "lg", "full"]).optional(),
   brandIcon: z.string().optional(),
   justify: z.enum(["between", "center", "start"]).default("between"),
   navLinks: z.array(
@@ -66,6 +73,9 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
       type: "image",
       optionalKey: "logoImageUrl",
       placeholder: "https://...",
+      hasRadiusControl: true,
+      radiusKey: "logoImageRadius",
+      radiusLabel: "Arredondamento da Logo",
     },
     {
       key: "brandIcon",
@@ -123,6 +133,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
     content: {
       brandName: "NIVIX",
       logoImageUrl: "",
+      logoImageRadius: "none",
       brandIcon: "Sparkles",
       justify: "between",
       navLinks: [
@@ -393,7 +404,10 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
               <img
                 src={content.logoImageUrl}
                 alt={content.brandName || "Logo"}
-                className="h-8 sm:h-9 w-auto object-contain"
+                className={cn(
+                  "h-8 sm:h-9 w-auto object-contain transition-all duration-200",
+                  getLogoRadiusClass(content.logoImageRadius)
+                )}
               />
             ) : (
               content.brandIcon && (

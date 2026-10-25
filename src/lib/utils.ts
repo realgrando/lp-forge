@@ -33,6 +33,23 @@ export function getRadiusClass(radius: BorderRadiusPreset = "md"): string {
   }
 }
 
+export function getLogoRadiusClass(radius?: BorderRadiusPreset | string): string {
+  switch (radius) {
+    case "none":
+      return "rounded-none";
+    case "sm":
+      return "rounded-md";
+    case "md":
+      return "rounded-lg";
+    case "lg":
+      return "rounded-xl";
+    case "full":
+      return "rounded-full";
+    default:
+      return "rounded-none";
+  }
+}
+
 export function getSurfaceClasses(style: SurfaceStyle = "solid"): string {
   switch (style) {
     case "solid":

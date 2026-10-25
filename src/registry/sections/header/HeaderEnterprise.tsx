@@ -14,7 +14,13 @@ import {
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import {
+  cn,
+  getHeaderSurfaceClasses,
+  getLogoRadiusClass,
+  getRadiusClass,
+  getSurfaceClasses,
+} from "@/lib/utils";
 import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
 import { useStudioStore } from "@/store/useStudioStore";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
@@ -25,6 +31,7 @@ const headerEnterpriseSchema = z.object({
   topNotice: z.string(),
   brandName: z.string(),
   logoImageUrl: z.string().optional(),
+  logoImageRadius: z.enum(["none", "sm", "md", "lg", "full"]).optional(),
   brandIcon: z.string().optional(),
   navLinks: z.array(
     z.object({
@@ -94,6 +101,9 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
       label: "Imagem da Logo (Opcional)",
       type: "image",
       optionalKey: "logoImageUrl",
+      hasRadiusControl: true,
+      radiusKey: "logoImageRadius",
+      radiusLabel: "Arredondamento da Logo",
     },
     {
       key: "brandIcon",
@@ -150,6 +160,7 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
       topNotice: "SEG A SEX • 08H ÀS 18H",
       brandName: "NIVIX",
       logoImageUrl: "",
+      logoImageRadius: "none",
       brandIcon: "ShieldCheck",
       navLinks: [
         { label: "Serviços", url: "#servicos" },
@@ -542,7 +553,10 @@ export const HeaderEnterpriseSection = createSection<HeaderEnterpriseContent>({
                 <img
                   src={content.logoImageUrl}
                   alt={content.brandName || "Logo"}
-                  className="h-8 sm:h-9 w-auto object-contain"
+                  className={cn(
+                    "h-8 sm:h-9 w-auto object-contain transition-all duration-200",
+                    getLogoRadiusClass(content.logoImageRadius)
+                  )}
                 />
               ) : (
                 content.brandIcon && (

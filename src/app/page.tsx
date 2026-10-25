@@ -1124,6 +1124,15 @@ export default function StudioPage() {
 
                               // Image Field (com Upload, Drag & Drop e URL)
                               if (field.type === "image") {
+                                const hasRadius =
+                                  field.hasRadiusControl ??
+                                  (field.key === "logoImageUrl" || field.key.toLowerCase().includes("logo"));
+                                const radiusKey =
+                                  field.radiusKey ||
+                                  (field.key === "logoImageUrl" ? "logoImageRadius" : `${field.key}Radius`);
+                                const currentRadius =
+                                  (selectedSection.content as any)?.[radiusKey] as BorderRadiusPreset | undefined;
+
                                 return (
                                   <div
                                     key={field.key}
@@ -1173,6 +1182,23 @@ export default function StudioPage() {
                                         label=""
                                         value={val || ""}
                                         placeholder={field.placeholder || "https://... ou solte o arquivo"}
+                                        radius={hasRadius ? currentRadius || "none" : undefined}
+                                        onRadiusChange={
+                                          hasRadius
+                                            ? (newRadius) =>
+                                                updateSectionContent(
+                                                  selectedSection.id,
+                                                  radiusKey,
+                                                  newRadius
+                                                )
+                                            : undefined
+                                        }
+                                        radiusLabel={
+                                          field.radiusLabel ||
+                                          (field.key === "logoImageUrl"
+                                            ? "Arredondamento da Logo"
+                                            : "Arredondamento dos Cantos")
+                                        }
                                         onChange={(newUrl) =>
                                           updateSectionContent(
                                             selectedSection.id,
@@ -1180,13 +1206,20 @@ export default function StudioPage() {
                                             newUrl
                                           )
                                         }
-                                        onReset={() =>
+                                        onReset={() => {
                                           updateSectionContent(
                                             selectedSection.id,
                                             field.key,
                                             ""
-                                          )
-                                        }
+                                          );
+                                          if (hasRadius) {
+                                            updateSectionContent(
+                                              selectedSection.id,
+                                              radiusKey,
+                                              "none"
+                                            );
+                                          }
+                                        }}
                                       />
                                     )}
                                   </div>

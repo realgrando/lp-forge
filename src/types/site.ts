@@ -334,6 +334,9 @@ export interface FieldDefinition {
   isBadge?: boolean; // Habilita controles extras de cor de fundo, borda e ícone no elemento
   options?: { value: string; label: string }[];
   typographyElementKey?: string; // Habilita gaveta de tipografia fina para este texto
+  hasRadiusControl?: boolean; // Habilita controle de arredondamento de bordas (ex: imagem/logo)
+  radiusKey?: string; // Chave personalizada no content para armazenar o radius (default: logoImageRadius)
+  radiusLabel?: string; // Rótulo customizado para o controle de arredondamento
   itemFields?: FieldDefinition[]; // Para campos do tipo 'array'
   defaultNewItem?: Record<string, any>; // Objeto padrão ao clicar em "+ Adicionar Item" em listas
 }

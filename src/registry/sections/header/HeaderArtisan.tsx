@@ -14,7 +14,13 @@ import {
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import {
+  cn,
+  getHeaderSurfaceClasses,
+  getLogoRadiusClass,
+  getRadiusClass,
+  getSurfaceClasses,
+} from "@/lib/utils";
 import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
 import { useStudioStore } from "@/store/useStudioStore";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
@@ -23,6 +29,7 @@ const headerArtisanSchema = z.object({
   brandSubtitle: z.string(),
   brandName: z.string(),
   logoImageUrl: z.string().optional(),
+  logoImageRadius: z.enum(["none", "sm", "md", "lg", "full"]).optional(),
   brandIcon: z.string().optional(),
   navLinks: z.array(
     z.object({
@@ -75,6 +82,9 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       label: "Imagem da Logo (Opcional)",
       type: "image",
       optionalKey: "logoImageUrl",
+      hasRadiusControl: true,
+      radiusKey: "logoImageRadius",
+      radiusLabel: "Arredondamento da Logo",
     },
     {
       key: "brandIcon",
@@ -118,6 +128,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
       brandSubtitle: "ATELIER & ARQUITETURA AUTORAL",
       brandName: "NIVIX",
       logoImageUrl: "",
+      logoImageRadius: "none",
       brandIcon: "Sparkles",
       navLinks: [
         { label: "O Menu", url: "#menu" },
@@ -337,7 +348,10 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
                   <img
                     src={content.logoImageUrl}
                     alt={content.brandName}
-                    className="h-10 w-auto object-contain"
+                    className={cn(
+                      "h-10 w-auto object-contain transition-all duration-200",
+                      getLogoRadiusClass(content.logoImageRadius)
+                    )}
                   />
                 ) : (
                   content.brandIcon && (

@@ -9,7 +9,8 @@ import {
   Check,
   FileImage,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getLogoRadiusClass } from "@/lib/utils";
+import { BorderRadiusPreset } from "@/types/site";
 
 interface ImageUploadFieldProps {
   label: string;
@@ -19,6 +20,9 @@ interface ImageUploadFieldProps {
   onChange: (val: string) => void;
   onReset?: () => void;
   className?: string;
+  radius?: BorderRadiusPreset;
+  onRadiusChange?: (radius: BorderRadiusPreset) => void;
+  radiusLabel?: string;
 }
 
 export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
@@ -29,6 +33,9 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   onChange,
   onReset,
   className,
+  radius,
+  onRadiusChange,
+  radiusLabel,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUrlOpen, setIsUrlOpen] = useState(false);
@@ -113,58 +120,108 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
 
       {hasImage ? (
         /* Preview Ativo com Opções de Troca ou Remoção */
-        <div className="relative group p-2 rounded-xl bg-zinc-950/80 border border-white/10 hover:border-white/20 transition-all flex items-center gap-3">
-          {/* Thumbnail com padrão de transparência */}
-          <div
-            className="w-12 h-12 rounded-lg border border-white/10 shrink-0 overflow-hidden relative flex items-center justify-center bg-zinc-900"
-            style={{
-              backgroundImage:
-                "linear-gradient(45deg, #27272a 25%, transparent 25%), linear-gradient(-45deg, #27272a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #27272a 75%), linear-gradient(-45deg, transparent 75%, #27272a 75%)",
-              backgroundSize: "6px 6px",
-            }}
-          >
-            <img
-              src={value}
-              alt="Prévia"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          {/* Info e Ações */}
-          <div className="flex-1 min-w-0 pr-1">
-            <span className="text-[11px] font-medium text-zinc-200 block truncate">
-              {isDataUrl ? "Imagem carregada (Upload)" : value}
-            </span>
-            <div className="flex items-center gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-[10px] text-[#F4B400] hover:underline font-semibold flex items-center gap-1"
-              >
-                <Upload className="w-2.5 h-2.5" />
-                Trocar arquivo
-              </button>
-              <span className="text-zinc-600 text-[10px]">•</span>
-              <button
-                type="button"
-                onClick={() => setIsUrlOpen(!isUrlOpen)}
-                className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1"
-              >
-                <LinkIcon className="w-2.5 h-2.5" />
-                Editar URL
-              </button>
+        <div className="relative group p-2.5 rounded-xl bg-zinc-950/80 border border-white/10 hover:border-white/20 transition-all flex flex-col gap-2.5">
+          <div className="flex items-center gap-3">
+            {/* Thumbnail com padrão de transparência */}
+            <div
+              className={cn(
+                "w-12 h-12 border border-white/10 shrink-0 overflow-hidden relative flex items-center justify-center bg-zinc-900 transition-all",
+                getLogoRadiusClass(radius)
+              )}
+              style={{
+                backgroundImage:
+                  "linear-gradient(45deg, #27272a 25%, transparent 25%), linear-gradient(-45deg, #27272a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #27272a 75%), linear-gradient(-45deg, transparent 75%, #27272a 75%)",
+                backgroundSize: "6px 6px",
+              }}
+            >
+              <img
+                src={value}
+                alt="Prévia"
+                className={cn("w-full h-full object-contain transition-all", getLogoRadiusClass(radius))}
+              />
             </div>
+
+            {/* Info e Ações */}
+            <div className="flex-1 min-w-0 pr-1">
+              <span className="text-[11px] font-medium text-zinc-200 block truncate">
+                {isDataUrl ? "Imagem carregada (Upload)" : value}
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-[10px] text-[#F4B400] hover:underline font-semibold flex items-center gap-1"
+                >
+                  <Upload className="w-2.5 h-2.5" />
+                  Trocar arquivo
+                </button>
+                <span className="text-zinc-600 text-[10px]">•</span>
+                <button
+                  type="button"
+                  onClick={() => setIsUrlOpen(!isUrlOpen)}
+                  className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1"
+                >
+                  <LinkIcon className="w-2.5 h-2.5" />
+                  Editar URL
+                </button>
+              </div>
+            </div>
+
+            {/* Botão Remover */}
+            <button
+              type="button"
+              onClick={handleClear}
+              title="Remover imagem"
+              className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          {/* Botão Remover */}
-          <button
-            type="button"
-            onClick={handleClear}
-            title="Remover imagem"
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          {/* Opção de Arredondamento (Disponível após o upload da imagem) */}
+          {onRadiusChange && (
+            <div className="pt-2 border-t border-white/5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-zinc-300">
+                  {radiusLabel || "Arredondamento da Logo"}
+                </span>
+                <span className="text-[10px] text-[#F4B400] font-mono font-medium">
+                  {radius === "none" || !radius
+                    ? "0 (Reto)"
+                    : radius === "sm"
+                    ? "SM (Suave)"
+                    : radius === "md"
+                    ? "MD (Médio)"
+                    : radius === "lg"
+                    ? "LG (Arredondado)"
+                    : "Full (Circular / Cápsula)"}
+                </span>
+              </div>
+              <div className="grid grid-cols-5 gap-1 bg-zinc-900/90 p-0.5 rounded-lg border border-white/5">
+                {[
+                  { value: "none", label: "0" },
+                  { value: "sm", label: "SM" },
+                  { value: "md", label: "MD" },
+                  { value: "lg", label: "LG" },
+                  { value: "full", label: "Full" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onRadiusChange(opt.value as BorderRadiusPreset)}
+                    className={cn(
+                      "py-1 text-[10px] font-medium rounded-md transition-all text-center",
+                      (radius || "none") === opt.value
+                        ? "bg-[#F4B400] text-black font-bold shadow-sm"
+                        : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* Dropzone / Upload / Input */
