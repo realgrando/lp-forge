@@ -492,8 +492,8 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       }
       className={cn(
         "relative transition-all duration-300 flex flex-col",
-        isHeader && isOverlayActive && "-mb-[4.5rem] md:-mb-[5rem] z-40 pointer-events-auto",
-        isSticky ? "sticky top-0 z-40" : "overflow-hidden",
+        isHeader && isOverlayActive && "-mb-[4.5rem] md:-mb-[5rem] pointer-events-auto",
+        isSticky && "sticky top-0",
         getSectionPaddingClass(),
         MIN_HEIGHT_MAP[layout.minHeight || "auto"],
         CONTAINER_ALIGN_Y_MAP[effectiveAlignY],
@@ -501,8 +501,11 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         isEditor && "cursor-pointer group/section",
         isEditor &&
           (isSelected
-            ? "ring-2 ring-[#F4B400] ring-inset z-20"
-            : "hover:ring-1 hover:ring-[#F4B400]/50 hover:ring-inset")
+            ? "ring-2 ring-[#F4B400] ring-inset z-50 shadow-2xl"
+            : cn(
+                "hover:ring-1 hover:ring-[#F4B400]/50 hover:ring-inset",
+                isHeader ? "z-40" : "z-10"
+              ))
       )}
     >
       {/* Âncora de backup para garantir que referências a section.id continuem funcionando */}
@@ -515,15 +518,28 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       {/* Divisores de Seção em Largura Total (quando o container pai for full) */}
       {isFullWidth && renderDividers(false)}
 
-      {/* Barra Flutuante de Controle Rápido no Modo Editor */}
+      {/* Indicador Sutil de Hover no Modo Editor (Não obstrui o conteúdo nem botões) */}
+      {isEditor && !isSelected && (
+        <div className="absolute top-2 left-3 z-30 opacity-0 group-hover/section:opacity-100 transition-opacity pointer-events-none">
+          <span className="px-2 py-0.5 rounded-md bg-zinc-950/85 border border-white/10 text-[10px] font-mono text-[#F4B400] backdrop-blur-sm shadow-md">
+            {sectionName || section.type}
+          </span>
+        </div>
+      )}
+
+      {/* Barra Flutuante de Controle Rápido no Modo Editor (Apenas na Seção Selecionada) */}
       {isEditor && (
         <div
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            "absolute top-3 right-3 z-50 flex items-center gap-1 rounded-xl bg-zinc-950/95 border border-white/10 px-2 py-1 shadow-xl backdrop-blur-md transition-opacity",
+            "absolute z-50 flex items-center gap-1 rounded-xl bg-zinc-950/95 border border-white/15 px-2 py-1 shadow-2xl backdrop-blur-md transition-all duration-200",
+            // Posicionamento inteligente para evitar colisão com Header em sobreposição
+            isFirstAfterHeader && headerOverlayEnabled
+              ? "top-24 md:top-28 right-3"
+              : "top-3 right-3",
             isSelected
-              ? "opacity-100"
-              : "opacity-0 group-hover/section:opacity-100"
+              ? "opacity-100 scale-100 pointer-events-auto ring-1 ring-[#F4B400]/40 shadow-black/80"
+              : "opacity-0 scale-95 pointer-events-none"
           )}
         >
           <span className="flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold text-[#F4B400] border-r border-white/10 mr-1">

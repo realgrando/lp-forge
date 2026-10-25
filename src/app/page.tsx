@@ -99,6 +99,9 @@ import {
   Shield,
   Compass,
   ArrowDown,
+  ArrowUp,
+  Copy,
+  Trash2,
 } from "lucide-react";
 
 export default function StudioPage() {
@@ -927,9 +930,58 @@ export default function StudioPage() {
                     </span>
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-white mt-0.5">
-                  {selectedDefinition.name}
-                </h3>
+                <div className="flex items-center justify-between mt-1.5 gap-2">
+                  <h3 className="text-sm font-bold text-white truncate min-w-0">
+                    {selectedDefinition.name}
+                  </h3>
+                  {/* Ações Rápidas da Seção no Topo do Inspetor */}
+                  <div className="flex items-center gap-0.5 bg-white/5 border border-white/10 rounded-lg p-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => moveSection(selectedSection.id, "up")}
+                      title="Mover seção para cima"
+                      className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveSection(selectedSection.id, "down")}
+                      title="Mover seção para baixo"
+                      className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleSectionVisibility(selectedSection.id)}
+                      title={selectedSection.layout.hidden ? "Mostrar seção" : "Ocultar seção"}
+                      className="p-1 text-zinc-400 hover:text-white rounded hover:bg-white/10 transition-colors"
+                    >
+                      {selectedSection.layout.hidden ? (
+                        <Eye className="w-3.5 h-3.5 text-[#F4B400]" />
+                      ) : (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => duplicateSection(selectedSection.id)}
+                      title="Duplicar seção"
+                      className="p-1 text-zinc-400 hover:text-[#F4B400] rounded hover:bg-white/10 transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSection(selectedSection.id)}
+                      title="Excluir seção"
+                      className="p-1 text-red-400 hover:text-red-300 rounded hover:bg-red-500/20 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
 
                 {/* Campo de ID Único / Âncora de Navegação */}
                 <div className="mt-2.5 pt-2 border-t border-white/5 space-y-1">
