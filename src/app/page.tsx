@@ -2438,17 +2438,25 @@ export default function StudioPage() {
                           ) : (
                             <div className="space-y-3 pt-1">
                               {/* Posição da Borda */}
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
                                   <label className="text-[11px] font-medium text-zinc-300">
                                     Posição da Borda
                                   </label>
-                                  <span className="text-[10px] text-zinc-500 font-mono">
-                                    {selectedSection.styles.borderPosition === "bottom"
+                                  <span className="text-[10px] text-[#F4B400] font-mono">
+                                    {selectedSection.styles.borderPosition === "top"
+                                      ? "Apenas Superior"
+                                      : selectedSection.styles.borderPosition === "bottom"
                                       ? "Apenas Inferior"
+                                      : selectedSection.styles.borderPosition === "sides"
+                                      ? "Laterais (Lados)"
                                       : selectedSection.styles.borderPosition === "top_bottom"
                                       ? "Superior & Inferior"
-                                      : "Contorno Completo"}
+                                      : selectedSection.styles.borderPosition === "all"
+                                      ? "Contorno Completo (Todas)"
+                                      : selectedSection.type.startsWith("header.")
+                                      ? "Apenas Inferior (Padrão)"
+                                      : "Contorno Completo (Padrão)"}
                                   </span>
                                 </div>
                                 <SegmentedControl<BorderPosition>
@@ -2461,12 +2469,14 @@ export default function StudioPage() {
                                       borderPosition: pos,
                                     })
                                   }
-                                  columns={3}
+                                  columns={5}
                                   size="sm"
                                   options={[
-                                    { value: "all", label: "Completa" },
-                                    { value: "bottom", label: "Inferior (B)" },
+                                    { value: "all", label: "Todas" },
+                                    { value: "top", label: "Superior" },
+                                    { value: "bottom", label: "Inferior" },
                                     { value: "top_bottom", label: "Sup / Inf" },
+                                    { value: "sides", label: "Lados" },
                                   ]}
                                 />
                               </div>

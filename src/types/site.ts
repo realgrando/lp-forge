@@ -153,7 +153,15 @@ export interface SectionLayout {
 }
 
 export type CardHoverEffect = "none" | "lift" | "glow" | "border_highlight" | "shine";
-export type BorderPosition = "all" | "bottom" | "top_bottom" | "none";
+export type BorderPosition =
+  | "all"
+  | "top"
+  | "bottom"
+  | "top_bottom"
+  | "sides"
+  | "left"
+  | "right"
+  | "none";
 export type SurfaceBlur = "none" | "sm" | "md" | "lg" | "xl";
 
 export interface SectionStyles {

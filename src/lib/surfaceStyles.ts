@@ -263,6 +263,14 @@ export function resolveHeaderSurfaceStyle({
       inlineStyle.borderRightWidth = 0;
       inlineStyle.borderStyle = "solid";
       inlineStyle.borderColor = finalBorderColor;
+    } else if (effectivePosition === "top") {
+      classList.push("border-t");
+      inlineStyle.borderTopWidth = `${bw}px`;
+      inlineStyle.borderBottomWidth = 0;
+      inlineStyle.borderLeftWidth = 0;
+      inlineStyle.borderRightWidth = 0;
+      inlineStyle.borderStyle = "solid";
+      inlineStyle.borderColor = finalBorderColor;
     } else if (effectivePosition === "top_bottom") {
       classList.push("border-y");
       inlineStyle.borderTopWidth = `${bw}px`;
@@ -271,6 +279,39 @@ export function resolveHeaderSurfaceStyle({
       inlineStyle.borderRightWidth = 0;
       inlineStyle.borderStyle = "solid";
       inlineStyle.borderColor = finalBorderColor;
+    } else if (effectivePosition === "sides") {
+      classList.push("border-x");
+      inlineStyle.borderLeftWidth = `${bw}px`;
+      inlineStyle.borderRightWidth = `${bw}px`;
+      inlineStyle.borderTopWidth = 0;
+      inlineStyle.borderBottomWidth = 0;
+      inlineStyle.borderStyle = "solid";
+      inlineStyle.borderColor = finalBorderColor;
+    } else if (effectivePosition === "left") {
+      classList.push("border-l");
+      inlineStyle.borderLeftWidth = `${bw}px`;
+      inlineStyle.borderTopWidth = 0;
+      inlineStyle.borderBottomWidth = 0;
+      inlineStyle.borderRightWidth = 0;
+      inlineStyle.borderStyle = "solid";
+      inlineStyle.borderColor = finalBorderColor;
+    } else if (effectivePosition === "right") {
+      classList.push("border-r");
+      inlineStyle.borderRightWidth = `${bw}px`;
+      inlineStyle.borderTopWidth = 0;
+      inlineStyle.borderBottomWidth = 0;
+      inlineStyle.borderLeftWidth = 0;
+      inlineStyle.borderStyle = "solid";
+      inlineStyle.borderColor = finalBorderColor;
+    } else if (effectivePosition === "none") {
+      classList.push("border-0 border-transparent");
+      inlineStyle.borderWidth = 0;
+      inlineStyle.borderTopWidth = 0;
+      inlineStyle.borderBottomWidth = 0;
+      inlineStyle.borderLeftWidth = 0;
+      inlineStyle.borderRightWidth = 0;
+      inlineStyle.borderStyle = "none";
+      inlineStyle.borderColor = "transparent";
     } else {
       classList.push("border");
       inlineStyle.borderWidth = `${bw}px`;
