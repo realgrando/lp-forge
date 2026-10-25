@@ -2150,6 +2150,38 @@ export default function StudioPage() {
                               />
                             )}
                           </div>
+
+                          {/* Arredondamento do Container Pai */}
+                          <div className="space-y-1.5 pt-2.5 border-t border-white/5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-semibold text-zinc-300 block">
+                                Arredondamento do Container Pai (Seção)
+                              </label>
+                              <span className="text-[10px] text-zinc-500 font-mono">
+                                {selectedSection.styles.parentBorderRadius || "0 (none)"}
+                              </span>
+                            </div>
+                            <SegmentedControl<BorderRadiusPreset>
+                              value={selectedSection.styles.parentBorderRadius || "none"}
+                              onChange={(rad) =>
+                                updateSectionStyles(selectedSection.id, {
+                                  parentBorderRadius: rad,
+                                })
+                              }
+                              columns={5}
+                              size="sm"
+                              options={[
+                                { value: "none", label: "0" },
+                                { value: "sm", label: "SM" },
+                                { value: "md", label: "MD" },
+                                { value: "lg", label: "LG" },
+                                { value: "full", label: "Full" },
+                              ]}
+                            />
+                            <span className="text-[10px] text-zinc-500 block">
+                              Arredonda as bordas e o fundo exclusivo do Container Pai (visível quando a seção for contida/bloco ou possuir fundo).
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </AccordionSection>
@@ -2333,16 +2365,20 @@ export default function StudioPage() {
                           </div>
                         </div>
 
-                        {/* Raio de Borda (Radius) */}
+                        {/* Raio de Borda do Container Filho (Radius) */}
                         <div className="space-y-1.5">
-                          <label className="text-xs font-semibold text-zinc-300 block">
-                            Arredondamento de Bordas (Radius)
-                          </label>
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-zinc-300 block">
+                              Arredondamento do Container Filho (Card / Superfície)
+                            </label>
+                            <span className="text-[10px] text-[#F4B400] font-mono">
+                              {selectedSection.styles.borderRadius || "0 (none)"}
+                            </span>
+                          </div>
                           <SegmentedControl<BorderRadiusPreset>
                             value={
                               selectedSection.styles.borderRadius ||
-                              siteDoc.theme.tokens?.borderRadius ||
-                              "lg"
+                              "none"
                             }
                             onChange={(rad) =>
                               updateSectionStyles(selectedSection.id, {
@@ -2359,6 +2395,9 @@ export default function StudioPage() {
                               { value: "full", label: "Full" },
                             ]}
                           />
+                          <span className="text-[10px] text-zinc-500 block">
+                            Arredonda exclusivamente o componente interno e a superfície do Container Filho.
+                          </span>
                         </div>
 
                         {/* Espessura da Borda */}

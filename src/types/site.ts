@@ -163,6 +163,9 @@ export interface SectionStyles {
   customSurface?: string;
   ambientGlow?: boolean;
   glowColor?: string;
+  // Arredondamento exclusivo do Container Pai (Seção Contida / Boxed)
+  parentBorderRadius?: BorderRadiusPreset;
+  // Arredondamento exclusivo do Container Filho (Card / Componente Interno)
   borderRadius?: BorderRadiusPreset;
   borderWidth?: "0" | "1" | "2" | "3" | "4";
   borderColor?: string;

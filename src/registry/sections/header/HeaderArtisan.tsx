@@ -291,12 +291,7 @@ export const HeaderArtisanSection = createSection<HeaderArtisanContent>({
     });
 
     const headerShapeClasses = isEdgeToEdge
-      ? cn(
-          "w-full max-w-none mx-0 mt-0",
-          styles.borderRadius && styles.borderRadius !== "none"
-            ? getRadiusClass(radiusPreset)
-            : "rounded-none"
-        )
+      ? "w-full max-w-none mx-0 mt-0 rounded-none"
       : cn(
           isAutoWidth ? "w-auto max-w-fit" : "w-full",
           "mt-0",

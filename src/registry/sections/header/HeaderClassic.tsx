@@ -612,12 +612,7 @@ export const HeaderClassicSection = createSection<HeaderClassicContent>({
 
     // Forma da barra: respeita 100% as opções estruturais do usuário (Camadas 1 e 2)
     const headerShapeClasses = isEdgeToEdge
-      ? cn(
-          "w-full max-w-none mx-0 mt-0",
-          styles.borderRadius && styles.borderRadius !== "none"
-            ? getRadiusClass(radiusPreset)
-            : "rounded-none"
-        )
+      ? "w-full max-w-none mx-0 mt-0 rounded-none"
       : cn(
           isAutoWidth ? "w-auto max-w-fit" : "w-full",
           "mt-0",

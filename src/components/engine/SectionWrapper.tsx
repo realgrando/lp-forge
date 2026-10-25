@@ -284,8 +284,12 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
     Boolean(styles.bgImage);
 
   const sectionDomId = section.anchorId?.trim().replace(/^#+/, "") || section.id;
-  const parentRadiusPreset = styles.borderRadius || theme.tokens?.borderRadius || "md";
+  // O Container Pai agora possui seu próprio controle exclusivo de arredondamento
+  // e NUNCA herda ou polui o borderRadius do Container Filho.
+  const parentRadiusPreset = styles.parentBorderRadius || "none";
   const parentRadiusClass = getRadiusClass(parentRadiusPreset);
+  const childRadiusPreset = styles.borderRadius || "none";
+  const childRadiusClass = getRadiusClass(childRadiusPreset);
 
   // Afastamento vertical da tag <section> na página
   const getSectionPaddingClass = () => {
@@ -608,12 +612,13 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           CONTAINER_ALIGN_X_MAP[effectiveAlignX],
           getParentContainerPaddingClass(),
           effectiveAlignY === "stretch" && "h-full flex-1",
+          !isFullWidth && parentRadiusClass,
           isEditor &&
             isSelected &&
             activeInspectorLayer === "parent" &&
             cn(
               "outline-2 outline-dashed outline-sky-400",
-              !isFullWidth ? parentRadiusClass : "rounded-xl"
+              !isFullWidth ? parentRadiusClass : "rounded-none"
             )
         )}
       >
@@ -641,10 +646,14 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
               ? "ml-auto mr-0 justify-end"
               : "mx-auto justify-center",
             effectiveAlignY === "stretch" && "h-full flex-1 flex flex-col",
+            effectiveComponentWidth !== "full" && childRadiusClass,
             isEditor &&
               isSelected &&
               (activeInspectorLayer === "child" || !activeInspectorLayer) &&
-              "outline-2 outline-dashed outline-[#F4B400] rounded-xl"
+              cn(
+                "outline-2 outline-dashed outline-[#F4B400]",
+                effectiveComponentWidth !== "full" ? childRadiusClass : "rounded-none"
+              )
           )}
         >
           {isEditor && isSelected && (activeInspectorLayer === "child" || !activeInspectorLayer) && (
