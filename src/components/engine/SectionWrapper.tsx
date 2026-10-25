@@ -291,6 +291,26 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   const childRadiusPreset = styles.borderRadius || "none";
   const childRadiusClass = getRadiusClass(childRadiusPreset);
 
+  // Hierarquia de Z-Index Estrita:
+  // 1. Header selecionado no editor: z-50
+  // 2. Header fixo / sticky / overlay ativo: z-40 (SEMPRE acima de qualquer Hero ou seção ao rolar)
+  // 3. Seção comum selecionada no editor (Hero, etc.): z-30 (acima de outras seções z-10, mas SEMPRE abaixo do Header z-40)
+  // 4. Seções comuns não selecionadas: z-10
+  const getSectionZIndexClass = () => {
+    if (isHeader) {
+      if (isEditor && isSelected) {
+        return "z-50";
+      }
+      return isSticky || isOverlayActive ? "z-40" : "z-30";
+    }
+
+    if (isEditor && isSelected) {
+      return "z-30 shadow-2xl ring-2 ring-[#F4B400] ring-inset";
+    }
+
+    return "z-10";
+  };
+
   // Afastamento vertical da tag <section> na página
   const getSectionPaddingClass = () => {
     if (isFullWidth) {
@@ -498,18 +518,13 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         "relative transition-all duration-300 flex flex-col",
         isHeader && isOverlayActive && "-mb-[4.5rem] md:-mb-[5rem] pointer-events-auto",
         isSticky && "sticky top-0",
+        getSectionZIndexClass(),
         getSectionPaddingClass(),
         MIN_HEIGHT_MAP[layout.minHeight || "auto"],
         CONTAINER_ALIGN_Y_MAP[effectiveAlignY],
         layout.hidden && isEditor && "opacity-40 grayscale",
         isEditor && "cursor-pointer group/section",
-        isEditor &&
-          (isSelected
-            ? "ring-2 ring-[#F4B400] ring-inset z-50 shadow-2xl"
-            : cn(
-                "hover:ring-1 hover:ring-[#F4B400]/50 hover:ring-inset",
-                isHeader ? "z-40" : "z-10"
-              ))
+        isEditor && !isSelected && "hover:ring-1 hover:ring-[#F4B400]/50 hover:ring-inset"
       )}
     >
       {/* Âncora de backup para garantir que referências a section.id continuem funcionando */}
