@@ -225,12 +225,13 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
     : isFirstAfterHeader && headerOverlayEnabled;
   const isHero = section.type.startsWith("hero.");
   const hasBgImage = Boolean(styles.bgImage);
-  // Headers e Heros operam sempre em Full-Width na macro-camada de seção para garantir
-  // que imagens de fundo, gradientes e ambient glow cubram 100% da tela (sem bordas/vazios pretos laterais).
-  // A contenção visual é tratada harmonicamente pelo componentWidth e contentMaxWidth.
+  // Respeita estritamente a escolha de containerWidth do designer no painel do Container Pai.
+  // Apenas quando o container pai for configurado como "full", a cor de fundo, gradientes e imagens
+  // preenchem a tela inteira (100vw). Quando for "boxed", "narrow" ou "mobile", o fundo é confinado
+  // dentro da caixa do Container Pai, com parentRadiusClass e margens externas limpas.
   const effectiveContainerWidth: ContainerWidth =
-    layout.containerWidth || (isHeader || isHero ? "full" : "boxed");
-  const isFullWidth = isHeader || isHero || hasBgImage || effectiveContainerWidth === "full";
+    layout.containerWidth || (isHeader ? "full" : "boxed");
+  const isFullWidth = effectiveContainerWidth === "full";
   const defaultPaddingY: PaddingScale = isHeader ? "none" : "normal";
   const effectivePaddingY = layout.paddingY || defaultPaddingY;
 
@@ -632,6 +633,7 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
           getParentContainerPaddingClass(),
           effectiveAlignY === "stretch" && "h-full flex-1",
           !isFullWidth && parentRadiusClass,
+          !isFullWidth && "overflow-hidden",
           isEditor &&
             isSelected &&
             activeInspectorLayer === "parent" &&
