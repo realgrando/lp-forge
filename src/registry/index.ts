@@ -135,6 +135,7 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition<any>> = {
 
   // Hero (4)
   [HeroImpactCenterSection.id]: HeroImpactCenterSection,
+  "hero.classic": HeroImpactCenterSection,
   [HeroSplitSection.id]: HeroSplitSection,
   [HeroCenteredSpotlightSection.id]: HeroCenteredSpotlightSection,
   [HeroLeadCaptureSection.id]: HeroLeadCaptureSection,
