@@ -14,15 +14,22 @@ import {
   LayoutAlignItems,
   LayoutGap,
 } from "@/types/site";
-import { cn, getHeaderSurfaceClasses, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
+import {
+  cn,
+  getLogoRadiusClass,
+  getRadiusClass,
+} from "@/lib/utils";
 import { resolveHeaderSurfaceStyle } from "@/lib/surfaceStyles";
 import { useStudioStore } from "@/store/useStudioStore";
 import { useHeaderScroll } from "@/hooks/useHeaderScroll";
 
 const navbarModernSchema = z.object({
   brandName: z.string(),
-  brandBadge: z.string(),
+  logoImageUrl: z.string().optional(),
+  logoImageRadius: z.enum(["none", "sm", "md", "lg", "full"]).optional(),
+  brandBadge: z.string().optional(),
   brandIcon: z.string().optional(),
+  justify: z.enum(["between", "center", "start"]).default("between"),
   navLinks: z.array(
     z.object({
       label: z.string(),
@@ -43,9 +50,9 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
   iconName: "LayoutTemplate",
   modes: ["LANDING_PAGE"],
   toggleableElements: [
-    { key: "brandName", label: "Nome da Marca" },
+    { key: "brand", label: "Logo / Nome da Marca" },
+    { key: "logoImageUrl", label: "Imagem da Logo" },
     { key: "brandBadge", label: "Selo ao lado da Logo" },
-    { key: "brandIcon", label: "Ícone da Marca" },
     { key: "navLinks", label: "Menu de Navegação" },
     { key: "ctaButton", label: "Botão de Ação (CTA)" },
   ],
@@ -55,8 +62,24 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       key: "brandName",
       label: "Nome da Marca / Logo",
       type: "text",
-      optionalKey: "brandName",
+      optionalKey: "brand",
       typographyElementKey: "brandName",
+    },
+    {
+      key: "logoImageUrl",
+      label: "URL da Imagem da Logo (Opcional)",
+      type: "image",
+      optionalKey: "logoImageUrl",
+      placeholder: "https://...",
+      hasRadiusControl: true,
+      radiusKey: "logoImageRadius",
+      radiusLabel: "Arredondamento da Logo",
+    },
+    {
+      key: "brandIcon",
+      label: "Ícone da Marca (Opcional)",
+      type: "icon",
+      optionalKey: "brand",
     },
     {
       key: "brandBadge",
@@ -67,16 +90,11 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       typographyElementKey: "brandBadge",
     },
     {
-      key: "brandIcon",
-      label: "Ícone da Marca",
-      type: "icon",
-      optionalKey: "brandName",
-    },
-    {
       key: "navLinks",
       label: "Links do Menu",
       type: "array",
       optionalKey: "navLinks",
+      typographyElementKey: "navLinks",
       defaultNewItem: { label: "Nova Seção", url: "#secao" },
       itemFields: [
         { key: "label", label: "Texto do Link", type: "text" },
@@ -88,27 +106,43 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       label: "Botão de Ação da Navbar",
       type: "button",
       optionalKey: "ctaButton",
+      typographyElementKey: "ctaButton",
     },
   ],
   defaultData: {
     layout: {
+      containerWidth: "boxed",
+      containerAlignX: "center",
+      containerAlignY: "center",
+      minHeight: "auto",
       paddingY: "none",
+      paddingX: "normal",
+      sticky: true,
+      componentWidth: "full",
+      direction: "row",
+      reverse: false,
       paddingInner: "compact",
       paddingInnerX: "normal",
-      paddingX: "normal",
-      containerWidth: "boxed",
-      sticky: true,
+      distribution: "between",
+      alignItems: "center",
+      gap: "normal",
+      contentMaxWidth: "full",
     },
     styles: {
       surfaceVariant: "glass",
       borderRadius: "full",
+      borderWidth: "1",
       ambientGlow: false,
+      bgGradientEnabled: false,
       hiddenElements: {},
     },
     content: {
       brandName: "NIVIX",
+      logoImageUrl: "",
+      logoImageRadius: "none",
       brandBadge: "ENTERPRISE",
       brandIcon: "Sparkles",
+      justify: "between",
       navLinks: [
         { label: "Soluções", url: "#solucoes" },
         { label: "Diferenciais", url: "#features" },
@@ -138,17 +172,20 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
     const accentColor = styles.customAccent || theme.palette.accent;
     const isHidden = (k: string) => Boolean(styles.hiddenElements?.[k]);
 
+    const isBrandHidden = isHidden("brand") || isHidden("brandName");
     const hasNavLinks =
       !isHidden("navLinks") &&
       Boolean(content.navLinks && content.navLinks.length > 0);
     const hasCta =
       !isHidden("ctaButton") && Boolean(content.ctaButton?.enabled);
-    const hasMobileMenu = hasNavLinks;
 
     const viewport = useStudioStore((s) => s.viewport);
     const isMobileLayout = layout?.containerWidth === "mobile" || viewport === "mobile";
     const isNarrowWidth = layout?.containerWidth === "narrow" || layout?.componentWidth === "narrow";
     const isBoxedWidth = layout?.containerWidth === "boxed" || layout?.componentWidth === "boxed";
+    const isAutoWidth = !isMobileLayout && layout?.componentWidth === "auto";
+
+    const hasMobileMenu = hasNavLinks || (hasCta && isMobileLayout);
 
     // Resolução combinável de Comportamento de Rolagem
     const scrollVisibility =
@@ -175,6 +212,7 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
     const isResponsive = direction === "responsive";
     const isStretchY = layout?.containerAlignY === "stretch";
 
+    // Respiro Interno Vertical do Header
     const innerYClasses: Record<string, string> = isCol
       ? {
           none: "py-2 min-h-[160px]",
@@ -191,32 +229,38 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
         }
       : {
           none: "py-1.5 min-h-[48px]",
-          compact: "py-2.5 md:py-3 min-h-[56px] md:min-h-[64px]",
-          normal: "py-3 md:py-4 min-h-[64px] md:min-h-[76px]",
-          spacious: "py-4 md:py-6 min-h-[76px] md:min-h-[92px]",
+          compact: "py-2 md:py-2.5 min-h-[56px] md:min-h-[64px]",
+          normal: "py-3 md:py-3.5 min-h-[64px] md:min-h-[76px]",
+          spacious: "py-4 md:py-5 min-h-[76px] md:min-h-[92px]",
         };
 
     const getInnerPadXClass = () => {
-      const scale = layout?.paddingInnerX || (isMobileLayout ? "normal" : "compact");
-      if (scale === "none") return "px-0";
+      const scale = layout?.paddingInnerX || (isMobileLayout ? "normal" : "normal");
+      if (scale === "none") return isAutoWidth ? "px-3" : "px-0";
       if (isMobileLayout) {
         if (scale === "compact") return "px-3 sm:px-4";
-        if (scale === "normal") return "px-6 sm:px-7";
-        return "px-10 sm:px-12";
+        if (scale === "normal") return "px-5 sm:px-6";
+        return "px-7 sm:px-8";
       }
       if (isNarrowWidth) {
-        if (scale === "compact") return "px-4 sm:px-6";
-        if (scale === "normal") return "px-8 sm:px-10";
-        return "px-12 sm:px-16";
+        if (scale === "compact") return "px-3 sm:px-4";
+        if (scale === "normal") return "px-6 sm:px-8";
+        return "px-8 sm:px-10";
       }
       if (isBoxedWidth) {
-        if (scale === "compact") return "px-6 sm:px-8";
-        if (scale === "normal") return "px-10 sm:px-14";
-        return "px-16 sm:px-20 md:px-24";
+        if (scale === "compact") return "px-4 sm:px-6";
+        if (scale === "normal") return "px-6 sm:px-8";
+        return "px-10 sm:px-12";
       }
-      if (scale === "compact") return "px-6 sm:px-10";
-      if (scale === "normal") return "px-12 sm:px-16 md:px-20";
-      return "px-16 sm:px-24 md:px-32 lg:px-36";
+      if (isAutoWidth) {
+        if (scale === "compact") return "px-4 sm:px-6";
+        if (scale === "normal") return "px-6 sm:px-8";
+        return "px-8 sm:px-12";
+      }
+      // full
+      if (scale === "compact") return "px-4 sm:px-6";
+      if (scale === "normal") return "px-8 sm:px-10 md:px-12";
+      return "px-12 sm:px-16 md:px-20";
     };
 
     const mobileInnerYClasses: Record<string, string> = {
@@ -226,12 +270,14 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       spacious: "py-4.5 min-h-[72px]",
     };
 
+    // Encolhe suavemente ao rolar
     const isShrinkSlim =
       scrollShape === "shrink_slim" && isScrolled && !isScrollingUp && currentScroll > 60;
     const baseInnerY = isMobileLayout
-      ? mobileInnerYClasses[layout?.paddingInner || "normal"]
-      : innerYClasses[layout?.paddingInner || "normal"];
-    const innerY = isShrinkSlim
+      ? mobileInnerYClasses[layout?.paddingInner || "compact"]
+      : innerYClasses[layout?.paddingInner || "compact"];
+
+    const effectiveInnerY = isShrinkSlim
       ? "py-1.5 md:py-2 min-h-[46px] md:min-h-[54px]"
       : baseInnerY;
     const innerPadX = getInnerPadXClass();
@@ -251,13 +297,74 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       return trimmed;
     };
 
+    // Espaçamentos reativos
+    const gapClasses: Record<LayoutGap, string> = isNarrowWidth
+      ? {
+          none: "gap-1",
+          compact: "gap-2 sm:gap-3",
+          normal: "gap-3 sm:gap-4",
+          spacious: "gap-5 sm:gap-6",
+          monumental: "gap-6 sm:gap-8",
+        }
+      : {
+          none: "gap-1",
+          compact: "gap-3 sm:gap-4",
+          normal: "gap-4 sm:gap-6 lg:gap-8",
+          spacious: "gap-6 sm:gap-10 lg:gap-12",
+          monumental: "gap-8 sm:gap-14 lg:gap-18",
+        };
+
+    const navGapClasses: Record<LayoutGap, string> = isNarrowWidth
+      ? {
+          none: "gap-1",
+          compact: "gap-2",
+          normal: "gap-3 lg:gap-4",
+          spacious: "gap-4 lg:gap-6",
+          monumental: "gap-6 lg:gap-8",
+        }
+      : {
+          none: "gap-2",
+          compact: "gap-3.5 sm:gap-4",
+          normal: "gap-5 lg:gap-8",
+          spacious: "gap-7 lg:gap-10",
+          monumental: "gap-9 lg:gap-14",
+        };
+
     const alignClasses: Record<LayoutAlignItems, string> = {
       start: "items-start",
       center: "items-center",
       end: "items-end",
       stretch: "items-stretch",
     };
+
+    const contentWidthClasses: Record<ContentMaxWidth, string> = {
+      narrow: "max-w-xl w-full",
+      medium: "max-w-3xl w-full",
+      wide: "max-w-5xl w-full",
+      full: "w-full max-w-none",
+    };
+
+    const effectiveDistribution =
+      layout?.distribution || content.justify || "between";
+
+    const contentBoxPositionClass = isCol
+      ? layout?.alignItems === "start"
+        ? "mr-auto ml-0"
+        : layout?.alignItems === "end"
+        ? "ml-auto mr-0"
+        : "mx-auto"
+      : effectiveDistribution === "start"
+      ? "mr-auto ml-0"
+      : effectiveDistribution === "end"
+      ? "ml-auto mr-0"
+      : "mx-auto";
+
+    const effectiveGap = gapClasses[layout?.gap || "normal"];
+    const effectiveNavGap = navGapClasses[layout?.navGap || layout?.gap || "normal"];
+    const navTypography = styles?.typographyOverrides?.["navLinks"];
     const effectiveAlign = alignClasses[layout?.alignItems || "center"];
+    const effectiveContentWidth =
+      contentWidthClasses[layout?.contentMaxWidth || "full"];
     const isReverse = Boolean(layout?.reverse);
 
     const getDirectionClass = () => {
@@ -273,7 +380,6 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       return isReverse ? "flex-row-reverse" : "flex-row";
     };
 
-    const effectiveDistribution = layout?.distribution || "between";
     const justifyClass =
       effectiveDistribution === "center"
         ? "justify-center"
@@ -293,7 +399,7 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
       (layout?.scrollSurface === "transparent_to_glass" ||
       layout?.scrollSurface === "transparent_to_solid"
         ? "transparent"
-        : (styles.surfaceVariant as HeaderSurfaceType) || "solid");
+        : (styles.surfaceVariant as HeaderSurfaceType) || "glass");
 
     const scrolledSurface: HeaderSurfaceType =
       layout?.headerSurfaceScrolled ||
@@ -307,13 +413,7 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
     const activeSurfaceType: HeaderSurfaceType = isScrolled ? scrolledSurface : initialSurface;
     const isTransparentActive = activeSurfaceType === "transparent";
 
-    const getDynamicSurfaceClasses = () => {
-      return getHeaderSurfaceClasses(activeSurfaceType);
-    };
-
     const isAutoHide = scrollVisibility === "auto_hide";
-
-    const isAutoWidth = layout?.componentWidth === "auto";
 
     // Resolução Completa de Acabamento da Superfície (Bordas 0px garantido, cores, opacidades, blur e hover)
     const surfaceResolution = resolveHeaderSurfaceStyle({
@@ -331,64 +431,63 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
         ? "-translate-y-full opacity-0 scale-[0.98] pointer-events-none"
         : "translate-y-0 opacity-100 scale-100";
 
-    return (
-      <header
+    const renderHeaderInner = () => (
+      <div
         className={cn(
-          "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-40",
+          "flex transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isAutoWidth ? "w-auto max-w-fit" : "w-full",
-          isStretchY && "h-full flex-1 flex flex-col",
-          autoHideTransformClass
+          isStretchY && "h-full flex-1",
+          effectiveContentWidth,
+          contentBoxPositionClass,
+          effectiveJustify,
+          effectiveAlign,
+          effectiveGap,
+          effectiveInnerY,
+          innerPadX,
+          getDirectionClass()
         )}
       >
-        <div
-          className={cn(
-            "flex transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,min-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-xl",
-            isAutoWidth
-              ? "w-auto max-w-fit gap-4 sm:gap-6 rounded-full"
-              : isEdgeToEdge
-              ? "w-full rounded-none"
-              : cn("w-full", getRadiusClass(radiusPreset)),
-            isStretchY && "h-full flex-1",
-            effectiveJustify,
-            effectiveAlign,
-            getDirectionClass(),
-            innerY,
-            innerPadX,
-            surfaceResolution.className
-          )}
-          style={{
-            ...surfaceResolution.style,
-          }}
-        >
-          {/* Marca */}
-          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
-            {!isHidden("brandName") && (
-              <a href="#" className="flex items-center gap-2.5 shrink-0 group">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-transform group-hover:scale-105"
-                  style={{ backgroundColor: accentColor, color: "#09090B" }}
-                >
-                  <DynamicIcon name={content.brandIcon || "Sparkles"} className="w-4 h-4" />
-                </div>
-
-                <div className="flex items-baseline truncate">
-                  <EditableText
-                    as="span"
-                    defaultIsHeading
-                    value={content.brandName}
-                    elementKey="brandName"
-                    styles={styles}
-                    className="font-black text-lg sm:text-xl tracking-tight"
-                  />
-                  <span
-                    className="text-lg sm:text-xl font-black leading-none ml-0.5"
-                    style={{ color: accentColor }}
+        {/* Marca + Selo */}
+        {!isBrandHidden && (
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
+            <a href="#" className="flex items-center gap-2.5 sm:gap-3 shrink-0 group min-w-0">
+              {!isHidden("logoImageUrl") && content.logoImageUrl ? (
+                <img
+                  src={content.logoImageUrl}
+                  alt={content.brandName || "Logo"}
+                  className={cn(
+                    "h-7 sm:h-8 md:h-9 w-auto object-contain transition-all duration-200",
+                    getLogoRadiusClass(content.logoImageRadius)
+                  )}
+                />
+              ) : (
+                content.brandIcon && (
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-transform group-hover:scale-105"
+                    style={{ backgroundColor: accentColor, color: "#09090B" }}
                   >
-                    .
-                  </span>
-                </div>
-              </a>
-            )}
+                    <DynamicIcon name={content.brandIcon || "Sparkles"} className="w-4 h-4" />
+                  </div>
+                )
+              )}
+
+              <div className="flex items-baseline truncate">
+                <EditableText
+                  as="span"
+                  defaultIsHeading
+                  value={content.brandName}
+                  elementKey="brandName"
+                  styles={styles}
+                  className="font-black text-lg sm:text-xl md:text-2xl tracking-tight"
+                />
+                <span
+                  className="text-lg sm:text-xl md:text-2xl font-black leading-none ml-0.5"
+                  style={{ color: accentColor }}
+                >
+                  .
+                </span>
+              </div>
+            </a>
 
             {!isHidden("brandBadge") && content.brandBadge && (
               <EditableText
@@ -397,114 +496,193 @@ export const NavbarModernSection = createSection<NavbarModernContent>({
                 value={content.brandBadge}
                 elementKey="brandBadge"
                 styles={styles}
-                className="hidden sm:inline-flex px-2 py-0.5 text-[9px] rounded-full"
+                className="hidden sm:inline-flex px-2.5 py-0.5 text-[9px] rounded-full font-bold tracking-wider"
               />
             )}
           </div>
+        )}
 
-          {/* Links Centrais (Desktop) */}
-          {hasNavLinks && (
-            <nav
-              className={cn(
-                isMobileLayout ? "hidden" : "hidden md:flex items-center",
-                isNarrowWidth ? "gap-3 lg:gap-4 mx-2" : "gap-5 lg:gap-8 mx-3 lg:mx-4"
-              )}
-            >
-              {content.navLinks.map((item, idx) => (
+        {/* Links Centrais (Desktop) */}
+        {hasNavLinks && (
+          <nav
+            className={cn(
+              isMobileLayout ? "hidden" : "hidden md:flex items-center",
+              effectiveNavGap,
+              isNarrowWidth ? "mx-2" : "mx-3 lg:mx-4"
+            )}
+          >
+            {content.navLinks.map((item, idx) => {
+              const hoverStyle = layout?.navHoverStyle || "underline";
+              const isPill = hoverStyle === "pill";
+              const isUnderline = hoverStyle === "underline";
+              const isGlow = hoverStyle === "glow";
+
+              return (
                 <a
                   key={idx}
                   href={getNormalizedHref(item.url)}
+                  style={{
+                    fontFamily: navTypography?.fontFamily || undefined,
+                    color: navTypography?.color || undefined,
+                  }}
                   className={cn(
-                    "font-semibold opacity-75 hover:opacity-100 transition-opacity relative group py-1 whitespace-nowrap",
-                    isNarrowWidth ? "text-[11px]" : "text-xs"
+                    "font-semibold transition-all relative group whitespace-nowrap",
+                    navTypography?.fontSize ||
+                      (isNarrowWidth ? "text-[11px]" : "text-xs"),
+                    navTypography?.fontWeight || "font-semibold",
+                    navTypography?.textTransform || "normal-case",
+                    navTypography?.letterSpacing,
+                    isPill &&
+                      "px-3 py-1.5 rounded-lg opacity-80 hover:opacity-100 hover:bg-white/10 hover:text-white",
+                    isUnderline &&
+                      "py-1 opacity-80 hover:opacity-100 hover:text-white",
+                    isGlow &&
+                      "opacity-80 hover:opacity-100 hover:text-white hover:drop-shadow-[0_0_8px_rgba(244,180,0,0.8)]",
+                    !isPill &&
+                      !isUnderline &&
+                      !isGlow &&
+                      "opacity-80 hover:opacity-100 hover:text-[#F4B400]"
                   )}
                 >
-                  {item.label}
-                  <span
-                    className="absolute -bottom-0.5 left-0 w-0 h-0.5 transition-all group-hover:w-full"
-                    style={{ backgroundColor: accentColor }}
-                  />
+                  <span>{item.label}</span>
+                  {isUnderline && (
+                    <span
+                      className="absolute -bottom-0.5 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full"
+                      style={{ backgroundColor: accentColor }}
+                    />
+                  )}
                 </a>
-              ))}
-            </nav>
+              );
+            })}
+          </nav>
+        )}
+
+        {/* Ações Direita: CTA e Hamburguer Mobile */}
+        <div
+          className={cn(
+            "flex items-center shrink-0 gap-2 sm:gap-2.5",
+            isReverse && "flex-row-reverse"
+          )}
+        >
+          {hasCta && (
+            <div
+              className={cn(
+                isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block",
+                "shrink-0"
+              )}
+            >
+              <SmartButton
+                button={content.ctaButton}
+                elementKey="ctaButton"
+                styles={styles}
+                theme={theme}
+                context="header"
+              />
+            </div>
           )}
 
-          {/* Ações Direita */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            {hasCta && (
-              <div className={cn(isMobileLayout ? "hidden" : hasNavLinks ? "hidden md:block" : "block", "shrink-0")}>
-                <SmartButton
-                  button={content.ctaButton}
-                  elementKey="ctaButton"
-                  styles={styles}
-                  theme={theme}
-                  context="header"
-                />
-              </div>
-            )}
-
-            {/* Hamburguer Mobile */}
-            {hasMobileMenu && (
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={cn(
-                  "p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all flex items-center justify-center shrink-0",
-                  isMobileLayout ? "flex" : "md:hidden flex"
-                )}
-                aria-label="Menu"
-              >
-                {mobileMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </button>
-            )}
-          </div>
+          {hasMobileMenu && (
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className={cn(
+                "p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/15 text-white transition-all flex items-center justify-center shrink-0 focus:outline-none",
+                isMobileLayout ? "flex" : "md:hidden flex"
+              )}
+              aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5" style={{ color: accentColor }} />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+          )}
         </div>
+      </div>
+    );
 
-        {/* GAVETA SUSPENSA MOBILE */}
-        {hasMobileMenu && mobileMenuOpen && (
-          <div
-            className={cn(
-              "mt-2 p-4 rounded-2xl border border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200",
-              !isMobileLayout && "md:hidden"
-            )}
-          >
-            <nav className="flex flex-col space-y-1.5">
+    // Gaveta Suspensa Mobile
+    const renderMobileDrawer = () => {
+      if (!mobileMenuOpen || !hasMobileMenu) return null;
+
+      return (
+        <div
+          className={cn(
+            "mt-2 w-full p-4 rounded-2xl border border-white/10 bg-zinc-950/95 backdrop-blur-xl shadow-2xl flex flex-col gap-3.5 animate-in fade-in-50 slide-in-from-top-2 duration-200",
+            !isMobileLayout && "md:hidden",
+            surfaceStyle !== "solid" && "backdrop-blur-xl"
+          )}
+          style={{
+            backgroundColor: styles.customSurface || undefined,
+            borderColor: styles.borderColor || undefined,
+          }}
+        >
+          {hasNavLinks && (
+            <nav className="flex flex-col gap-1">
               {content.navLinks.map((item, idx) => (
                 <a
                   key={idx}
                   href={getNormalizedHref(item.url)}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="px-3.5 py-2.5 rounded-xl text-sm font-semibold opacity-85 hover:opacity-100 hover:bg-white/5 transition-all flex items-center justify-between"
+                  className="text-sm font-semibold tracking-wide text-zinc-300 hover:text-white py-2.5 px-3 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between"
                 >
                   <span>{item.label}</span>
-                  <span className="text-xs opacity-40">→</span>
+                  <DynamicIcon name="ChevronRight" className="w-4 h-4 opacity-40" />
                 </a>
               ))}
             </nav>
+          )}
 
-            {hasCta && (
-              <div
-                onClick={() => setMobileMenuOpen(false)}
-                className="pt-2 border-t border-white/10"
-              >
-                <SmartButton
-                  button={{
-                    ...content.ctaButton,
-                    fullWidth: true,
-                  }}
-                  elementKey="ctaButton"
-                  styles={styles}
-                  theme={theme}
-                  context="header"
-                />
-              </div>
-            )}
-          </div>
+          {hasCta && (
+            <div
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(hasNavLinks && "pt-3 border-t border-white/10")}
+            >
+              <SmartButton
+                button={content.ctaButton}
+                elementKey="ctaButton"
+                styles={styles}
+                theme={theme}
+                context="header"
+                className="w-full text-center"
+              />
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <header
+        className={cn(
+          "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] relative z-40",
+          isAutoWidth ? "w-auto max-w-fit" : "w-full",
+          isStretchY && "h-full flex-1 flex flex-col",
+          contentBoxPositionClass,
+          autoHideTransformClass
         )}
+      >
+        <div
+          className={cn(
+            "transition-[max-width,width,border-radius,margin,padding,box-shadow,background-color,border-color,min-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-xl",
+            isEdgeToEdge
+              ? "w-full rounded-none"
+              : cn(
+                  isAutoWidth ? "w-auto max-w-fit" : "w-full",
+                  getRadiusClass(radiusPreset)
+                ),
+            isStretchY && "h-full flex-1 flex flex-col",
+            surfaceResolution.className
+          )}
+          style={{
+            ...surfaceResolution.style,
+          }}
+        >
+          {renderHeaderInner()}
+        </div>
+
+        {renderMobileDrawer()}
       </header>
     );
   },
