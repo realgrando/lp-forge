@@ -250,18 +250,29 @@ export function getSectionDefinition(
 }
 
 export function getAllSections(): SectionDefinition<any>[] {
-  return Object.values(SECTION_REGISTRY);
+  const seen = new Set<string>();
+  const list: SectionDefinition<any>[] = [];
+  for (const sec of Object.values(SECTION_REGISTRY)) {
+    if (!seen.has(sec.id)) {
+      seen.add(sec.id);
+      list.push(sec);
+    }
+  }
+  return list;
 }
 
 export function getSectionsByMode(mode: SiteMode): SectionDefinition<any>[] {
-  return Object.values(SECTION_REGISTRY).filter((sec) =>
-    sec.modes.includes(mode)
-  );
+  const seen = new Set<string>();
+  return Object.values(SECTION_REGISTRY).filter((sec) => {
+    if (seen.has(sec.id)) return false;
+    seen.add(sec.id);
+    return sec.modes.includes(mode);
+  });
 }
 
 export function getCatalogCategories(): string[] {
   const categories = new Set<string>();
-  Object.values(SECTION_REGISTRY).forEach((sec) =>
+  getAllSections().forEach((sec) =>
     categories.add(sec.category)
   );
   return Array.from(categories);
