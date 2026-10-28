@@ -39,12 +39,12 @@ interface SectionWrapperProps {
   children: React.ReactNode;
 }
 
-// Distribuição Flex / Alinhamento de Elementos no Container
+// Distribuição Flex (Main-Axis / Justify Content)
 export const DISTRIBUTION_MAP: Record<LayoutDistribution, string> = {
   between: "justify-between",
-  center: "justify-center text-center items-center",
-  start: "justify-start text-left items-start",
-  end: "justify-end text-right items-end",
+  center: "justify-center",
+  start: "justify-start",
+  end: "justify-end",
   around: "justify-around",
 };
 

@@ -199,17 +199,22 @@ export const HeroCenteredSpotlightSection = createSection<HeroCenteredContent>({
       return isReverse ? "flex-col-reverse" : "flex-col";
     };
 
-    const isStart = layout?.distribution === "start";
-    const isEnd = layout?.distribution === "end";
-    const alignmentClass = isStart
+    const isCol = direction === "col";
+    const effectiveHorizontalAlign = isCol
+      ? layout?.alignItems || "center"
+      : layout?.distribution || "center";
+
+    const isHorizStart = effectiveHorizontalAlign === "start";
+    const isHorizEnd = effectiveHorizontalAlign === "end";
+    const alignmentClass = isHorizStart
       ? "items-start text-left"
-      : isEnd
+      : isHorizEnd
       ? "items-end text-right"
       : "items-center text-center";
 
-    const boxPositionClass = isStart
+    const boxPositionClass = isHorizStart
       ? "mr-auto ml-0"
-      : isEnd
+      : isHorizEnd
       ? "ml-auto mr-0"
       : "mx-auto";
 
@@ -258,9 +263,9 @@ export const HeroCenteredSpotlightSection = createSection<HeroCenteredContent>({
           <div
             className={cn(
               "w-full flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3.5 pt-2",
-              isStart
+              isHorizStart
                 ? "sm:justify-start"
-                : isEnd
+                : isHorizEnd
                 ? "sm:justify-end"
                 : "sm:justify-center"
             )}

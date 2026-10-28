@@ -296,31 +296,81 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
     const radiusPreset = styles.borderRadius || theme.tokens.borderRadius;
     const isHidden = (k: string) => Boolean(styles.hiddenElements?.[k]);
 
-    // Distribuição e Alinhamento Horizontal (Flex Engine)
-    const isStart =
-      layout?.distribution === "start" ||
-      (content.align === "left" && !layout?.distribution);
-    const isEnd = layout?.distribution === "end";
-    const isBetween = layout?.distribution === "between";
-    const isAround = layout?.distribution === "around";
+    // Inversão de Ordem dos Elementos (Reverse toggle) e Direção
+    const isReverse = Boolean(layout?.reverse);
+    const direction = layout?.direction || "col";
+    const isCol = direction === "col";
+    const isRow = direction === "row";
+    const isResponsive = direction === "responsive";
 
-    const stackAlignmentClass = isStart
+    // --- EIXO HORIZONTAL (EIXO X) ---
+    // Em coluna: controlado pelo cross-axis (alignItems)
+    // Em linha/responsivo: controlado pelo main-axis (distribution)
+    const effectiveHorizontalAlign = isCol
+      ? layout?.alignItems || (content.align === "left" ? "start" : "center")
+      : layout?.distribution || "between";
+
+    const isHorizStart =
+      effectiveHorizontalAlign === "start" ||
+      (content.align === "left" && !layout?.alignItems);
+    const isHorizEnd = effectiveHorizontalAlign === "end";
+    const isHorizStretch = effectiveHorizontalAlign === "stretch";
+
+    // Alinhamento de texto e elementos dentro da coluna de conteúdo
+    const stackAlignmentClass = isHorizStart
       ? "items-start text-left"
-      : isEnd
+      : isHorizEnd
       ? "items-end text-right"
-      : isBetween
-      ? "items-start text-left"
+      : isHorizStretch
+      ? "items-stretch text-left"
       : "items-center text-center";
 
-    const justifyAlignmentClass = isStart
+    // Alinhamento horizontal da linha de botões e microcopy
+    const justifyAlignmentClass = isHorizStart
       ? "justify-start"
-      : isEnd
+      : isHorizEnd
       ? "justify-end"
-      : isBetween
-      ? "justify-between"
-      : isAround
-      ? "justify-around"
+      : isHorizStretch
+      ? "justify-start sm:justify-stretch"
       : "justify-center";
+
+    // --- EIXO VERTICAL (EIXO Y) ---
+    // Em coluna: controlado pelo main-axis (distribution)
+    // Em linha/responsivo: controlado pelo cross-axis (alignItems)
+    const effectiveVerticalAlign = isCol
+      ? layout?.distribution || "center"
+      : layout?.alignItems || "center";
+
+    const colVerticalJustifyClass =
+      effectiveVerticalAlign === "start"
+        ? "justify-start"
+        : effectiveVerticalAlign === "end"
+        ? "justify-end"
+        : effectiveVerticalAlign === "between"
+        ? "justify-between"
+        : effectiveVerticalAlign === "around"
+        ? "justify-around"
+        : "justify-center";
+
+    const rowVerticalAlignClass =
+      effectiveVerticalAlign === "start"
+        ? "items-start"
+        : effectiveVerticalAlign === "end"
+        ? "items-end"
+        : effectiveVerticalAlign === "stretch"
+        ? "items-stretch"
+        : "items-center";
+
+    const rowHorizontalDistributionClass =
+      layout?.distribution === "start"
+        ? "justify-start"
+        : layout?.distribution === "end"
+        ? "justify-end"
+        : layout?.distribution === "center"
+        ? "justify-center"
+        : layout?.distribution === "around"
+        ? "justify-around"
+        : "justify-between";
 
     // Espaçamento Dinâmico (Gaps)
     const gapClasses: Record<LayoutGap, string> = {
@@ -349,22 +399,6 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
       monumental: "gap-16 sm:gap-28",
     };
     const effectiveStatsGap = statsGapClasses[layout?.gap || "normal"];
-
-    // Inversão de Ordem dos Elementos (Reverse toggle) e Direção
-    const isReverse = Boolean(layout?.reverse);
-    const direction = layout?.direction || "col";
-
-    const getHeroDirectionClass = () => {
-      if (direction === "row") {
-        return isReverse ? "flex-row-reverse" : "flex-row";
-      }
-      if (direction === "responsive") {
-        return isReverse
-          ? "flex-col-reverse md:flex-row-reverse"
-          : "flex-col md:flex-row";
-      }
-      return isReverse ? "flex-col-reverse" : "flex-col";
-    };
 
     const showPrimaryBtn =
       content.primaryCta?.enabled && !isHidden("primaryCta");
@@ -401,9 +435,9 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
         <div
           className={cn(
             "flex flex-col sm:flex-row items-center gap-3 pt-2 sm:pt-3 transition-all select-none",
-            isStart
+            isHorizStart
               ? "sm:justify-start"
-              : isEnd
+              : isHorizEnd
               ? "sm:justify-end"
               : "sm:justify-center",
             isReverse && "sm:flex-row-reverse"
@@ -425,9 +459,9 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
           <div
             className={cn(
               "flex flex-col gap-0.5",
-              isStart
+              isHorizStart
                 ? "items-start text-left"
-                : isEnd
+                : isHorizEnd
                 ? "items-end text-right"
                 : "items-center text-center sm:items-start sm:text-left"
             )}
@@ -464,16 +498,23 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
     // Renderizador do Bloco de Métricas / Estatísticas
     const renderStatsBlock = (isTopHook = false) => {
       if (!showStats || statsToRender.length === 0) return null;
+      const isSideColumn = (isRow || isResponsive) && !isCol;
+
       return (
         <div
           className={cn(
-            "w-full grid grid-cols-2 sm:flex sm:flex-wrap transition-all",
-            isTopHook
-              ? "pb-5 mb-2 border-b border-white/10"
-              : "pt-6 md:pt-8 mt-2 border-t border-white/10",
-            effectiveStatsGap,
-            isReverse && "sm:flex-row-reverse",
-            justifyAlignmentClass
+            "w-full transition-all",
+            isSideColumn
+              ? "grid grid-cols-2 gap-3.5 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-sm"
+              : [
+                  "grid grid-cols-2 sm:flex sm:flex-wrap",
+                  isTopHook
+                    ? "pb-5 mb-2 border-b border-white/10"
+                    : "pt-6 md:pt-8 mt-2 border-t border-white/10",
+                  effectiveStatsGap,
+                  isReverse && "sm:flex-row-reverse",
+                  justifyAlignmentClass,
+                ]
           )}
         >
           {statsToRender.map((stat, idx) => (
@@ -486,9 +527,9 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
                   getRadiusClass(radiusPreset),
                   "p-3 sm:px-5 sm:py-3.5 border shadow-sm",
                 ],
-                isStart
+                isHorizStart
                   ? "items-start text-left"
-                  : isEnd
+                  : isHorizEnd
                   ? "items-end text-right"
                   : "items-center text-center"
               )}
@@ -530,10 +571,15 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
     // Renderizador da Faixa de Confiança / Logos de Clientes
     const renderTrustLogos = () => {
       if (!showTrustLogos) return null;
+      const isSideColumn = (isRow || isResponsive) && !isCol;
+
       return (
         <div
           className={cn(
-            "w-full pt-8 sm:pt-10 flex flex-col gap-3.5 border-t border-white/10 transition-all",
+            "w-full flex flex-col gap-3.5 transition-all",
+            isSideColumn
+              ? "pt-4 border-t border-white/10 mt-2"
+              : "pt-8 sm:pt-10 border-t border-white/10",
             stackAlignmentClass
           )}
         >
@@ -582,12 +628,165 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
         styles.surfaceVariant !== "solid" &&
         layout?.containerWidth !== "full");
 
+    const hasSecondaryContent =
+      (showStats && statsToRender.length > 0) || showTrustLogos;
+
+    const renderPrimaryCopyBlock = () => (
+      <>
+        {/* Badge Superior com Ícone Dinâmico */}
+        {!isHidden("badge") && content.badge && (
+          <EditableText
+            isBadge
+            defaultIconName={content.badgeIcon || "Sparkles"}
+            accentColor={accentColor}
+            value={content.badge}
+            elementKey="badge"
+            styles={styles}
+          />
+        )}
+
+        {/* Título Principal (Headline) */}
+        {!isHidden("headline") && (
+          <EditableText
+            as="h1"
+            defaultIsHeading
+            value={content.headline}
+            elementKey="headline"
+            styles={styles}
+            className="w-full font-black tracking-tighter leading-[0.98] text-4xl sm:text-6xl md:text-7xl lg:text-8xl"
+          />
+        )}
+
+        {/* Subtítulo em Destaque */}
+        {!isHidden("subtitle") && content.subtitle && (
+          <EditableText
+            as="p"
+            value={content.subtitle}
+            elementKey="subtitle"
+            styles={styles}
+            className="w-full text-lg sm:text-xl md:text-2xl font-bold opacity-90 leading-snug"
+          />
+        )}
+
+        {/* Parágrafo de Descrição Complementar */}
+        {!isHidden("description") && content.description && (
+          <EditableText
+            as="p"
+            value={content.description}
+            elementKey="description"
+            styles={styles}
+            className="w-full text-sm sm:text-base md:text-lg opacity-70 leading-relaxed max-w-3xl"
+          />
+        )}
+
+        {/* Botões de Ação (CTAs) e Nota de Apoio (Microcopy) */}
+        {(showPrimaryBtn || showSecondaryBtn || showMicroCopy) && (
+          <div
+            className={cn(
+              "w-full flex flex-col pt-3 transition-all",
+              stackAlignmentClass
+            )}
+          >
+            {(showPrimaryBtn || showSecondaryBtn) && (
+              <div
+                className={cn(
+                  "w-full flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center transition-all",
+                  effectiveButtonGap,
+                  isReverse && "flex-col-reverse sm:flex-row-reverse",
+                  justifyAlignmentClass
+                )}
+              >
+                {showPrimaryBtn && (
+                  <SmartButton
+                    button={content.primaryCta}
+                    elementKey="primaryCta"
+                    styles={styles}
+                    theme={theme}
+                    className="w-full sm:w-auto text-center"
+                  />
+                )}
+                {showSecondaryBtn && (
+                  <SmartButton
+                    button={content.secondaryCta}
+                    elementKey="secondaryCta"
+                    styles={styles}
+                    theme={theme}
+                    className="w-full sm:w-auto text-center"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Micro-copy de Garantia e Confiança abaixo dos Botões */}
+            {showMicroCopy && (
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 text-xs font-medium text-zinc-400 pt-2 sm:pt-2.5",
+                  justifyAlignmentClass
+                )}
+              >
+                <DynamicIcon
+                  name={content.ctaMicroCopyIcon || "ShieldCheck"}
+                  className="w-3.5 h-3.5 shrink-0"
+                  style={{ color: accentColor }}
+                />
+                <EditableText
+                  as="span"
+                  value={content.ctaMicroCopy}
+                  elementKey="ctaMicroCopy"
+                  styles={styles}
+                  className="text-xs font-medium text-zinc-400"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prova Social (Avatares + Avaliações) */}
+        {renderSocialProof()}
+      </>
+    );
+
+    const renderScrollIndicator = () => {
+      if (isHidden("scrollIndicator")) return null;
+      return (
+        <div
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.scrollBy({
+                top: window.innerHeight * 0.75,
+                behavior: "smooth",
+              });
+            }
+          }}
+          className={cn(
+            "pt-6 flex flex-col gap-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer select-none",
+            stackAlignmentClass
+          )}
+        >
+          <EditableText
+            as="span"
+            value={content.scrollLabel || "Rolar para Conhecer"}
+            elementKey="scrollLabel"
+            styles={styles}
+            className="text-[10px] font-bold uppercase tracking-widest"
+          />
+          <DynamicIcon
+            name="ChevronDown"
+            className="w-5 h-5 animate-bounce"
+            style={{ color: accentColor }}
+          />
+        </div>
+      );
+    };
+
     return (
       <div
         className={cn(
           "relative w-full flex flex-col transition-all",
           stackAlignmentClass,
-          layout?.alignItems === "stretch" && "flex-1 h-full justify-between",
+          colVerticalJustifyClass,
+          layout?.alignItems === "stretch" && "flex-1 h-full",
           isCardMode && [
             getSurfaceClasses(surfaceStyle),
             getRadiusClass(radiusPreset),
@@ -622,167 +821,85 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
           </div>
         )}
 
-        <div
-          className={cn(
-            "relative z-10 w-full flex transition-all",
-            getHeroDirectionClass(),
-            effectiveGap,
-            stackAlignmentClass,
-            layout?.alignItems === "stretch" && "flex-1 h-full justify-between"
-          )}
-        >
-          {/* Se layout.reverse = true, renderiza a barra de métricas no TOPO (Padrão Authority Hook) */}
-          {isReverse && renderStatsBlock(true)}
+        {/* MODO COLUNA (Single Column Standard) */}
+        {isCol ? (
+          <div
+            className={cn(
+              "relative z-10 w-full flex flex-col transition-all",
+              isReverse && "flex-col-reverse",
+              effectiveGap,
+              stackAlignmentClass,
+              colVerticalJustifyClass,
+              layout?.alignItems === "stretch" && "flex-1 h-full"
+            )}
+          >
+            {/* Se layout.reverse = true, renderiza a barra de métricas no TOPO (Padrão Authority Hook) */}
+            {isReverse && renderStatsBlock(true)}
 
-          {/* Badge Superior com Ícone Dinâmico */}
-          {!isHidden("badge") && content.badge && (
-            <EditableText
-              isBadge
-              defaultIconName={content.badgeIcon || "Sparkles"}
-              accentColor={accentColor}
-              value={content.badge}
-              elementKey="badge"
-              styles={styles}
-            />
-          )}
+            {renderPrimaryCopyBlock()}
 
-          {/* Título Principal (Headline) */}
-          {!isHidden("headline") && (
-            <EditableText
-              as="h1"
-              defaultIsHeading
-              value={content.headline}
-              elementKey="headline"
-              styles={styles}
-              className="w-full font-black tracking-tighter leading-[0.98] text-4xl sm:text-6xl md:text-7xl lg:text-8xl"
-            />
-          )}
+            {/* Barra de Métricas (Renderizada na Base quando reverse = false) */}
+            {!isReverse && renderStatsBlock(false)}
 
-          {/* Subtítulo em Destaque */}
-          {!isHidden("subtitle") && content.subtitle && (
-            <EditableText
-              as="p"
-              value={content.subtitle}
-              elementKey="subtitle"
-              styles={styles}
-              className="w-full text-lg sm:text-xl md:text-2xl font-bold opacity-90 leading-snug"
-            />
-          )}
+            {/* Faixa de Logos de Clientes / Confiança */}
+            {renderTrustLogos()}
 
-          {/* Parágrafo de Descrição Complementar */}
-          {!isHidden("description") && content.description && (
-            <EditableText
-              as="p"
-              value={content.description}
-              elementKey="description"
-              styles={styles}
-              className="w-full text-sm sm:text-base md:text-lg opacity-70 leading-relaxed max-w-3xl"
-            />
-          )}
-
-          {/* Botões de Ação (CTAs) e Nota de Apoio (Microcopy) */}
-          {(showPrimaryBtn || showSecondaryBtn || showMicroCopy) && (
+            {/* Indicador de Rolagem (Scroll Indicator) */}
+            {renderScrollIndicator()}
+          </div>
+        ) : (
+          /* MODO LINHA / RESPONSIVO (Split Column Standard) */
+          <div
+            className={cn(
+              "relative z-10 w-full flex transition-all",
+              isRow
+                ? isReverse
+                  ? "flex-row-reverse"
+                  : "flex-row"
+                : isReverse
+                ? "flex-col-reverse lg:flex-row-reverse"
+                : "flex-col lg:flex-row",
+              effectiveGap,
+              rowHorizontalDistributionClass,
+              rowVerticalAlignClass,
+              layout?.alignItems === "stretch" && "flex-1 h-full"
+            )}
+          >
+            {/* Coluna 1: Conteúdo Principal (Copy + CTAs + Social Proof) */}
             <div
               className={cn(
-                "w-full flex flex-col pt-3 transition-all",
-                stackAlignmentClass
+                "w-full flex flex-col transition-all",
+                hasSecondaryContent
+                  ? "lg:flex-1 lg:w-7/12 min-w-0"
+                  : "max-w-4xl mx-auto",
+                effectiveGap,
+                stackAlignmentClass,
+                colVerticalJustifyClass
               )}
             >
-              {(showPrimaryBtn || showSecondaryBtn) && (
-                <div
-                  className={cn(
-                    "w-full flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center transition-all",
-                    effectiveButtonGap,
-                    isReverse && "flex-col-reverse sm:flex-row-reverse",
-                    justifyAlignmentClass
-                  )}
-                >
-                  {showPrimaryBtn && (
-                    <SmartButton
-                      button={content.primaryCta}
-                      elementKey="primaryCta"
-                      styles={styles}
-                      theme={theme}
-                      className="w-full sm:w-auto text-center"
-                    />
-                  )}
-                  {showSecondaryBtn && (
-                    <SmartButton
-                      button={content.secondaryCta}
-                      elementKey="secondaryCta"
-                      styles={styles}
-                      theme={theme}
-                      className="w-full sm:w-auto text-center"
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* Micro-copy de Garantia e Confiança abaixo dos Botões */}
-              {showMicroCopy && (
-                <div
-                  className={cn(
-                    "flex items-center gap-1.5 text-xs font-medium text-zinc-400 pt-2 sm:pt-2.5",
-                    justifyAlignmentClass
-                  )}
-                >
-                  <DynamicIcon
-                    name={content.ctaMicroCopyIcon || "ShieldCheck"}
-                    className="w-3.5 h-3.5 shrink-0"
-                    style={{ color: accentColor }}
-                  />
-                  <EditableText
-                    as="span"
-                    value={content.ctaMicroCopy}
-                    elementKey="ctaMicroCopy"
-                    styles={styles}
-                    className="text-xs font-medium text-zinc-400"
-                  />
-                </div>
-              )}
+              {renderPrimaryCopyBlock()}
+              {renderScrollIndicator()}
             </div>
-          )}
 
-          {/* Prova Social (Avatares + Avaliações) */}
-          {renderSocialProof()}
-
-          {/* Barra de Métricas (Renderizada na Base quando reverse = false) */}
-          {!isReverse && renderStatsBlock(false)}
-
-          {/* Faixa de Logos de Clientes / Confiança */}
-          {renderTrustLogos()}
-
-          {/* Indicador de Rolagem (Scroll Indicator) */}
-          {!isHidden("scrollIndicator") && (
-            <div
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.scrollBy({
-                    top: window.innerHeight * 0.75,
-                    behavior: "smooth",
-                  });
-                }
-              }}
-              className={cn(
-                "pt-6 flex flex-col gap-2 opacity-50 hover:opacity-100 transition-opacity cursor-pointer select-none",
-                stackAlignmentClass
-              )}
-            >
-              <EditableText
-                as="span"
-                value={content.scrollLabel || "Rolar para Conhecer"}
-                elementKey="scrollLabel"
-                styles={styles}
-                className="text-[10px] font-bold uppercase tracking-widest"
-              />
-              <DynamicIcon
-                name="ChevronDown"
-                className="w-5 h-5 animate-bounce"
-                style={{ color: accentColor }}
-              />
-            </div>
-          )}
-        </div>
+            {/* Coluna 2: Mídia / Métricas / Logos de Confiança */}
+            {hasSecondaryContent && (
+              <div
+                className={cn(
+                  "w-full lg:flex-1 lg:w-5/12 lg:max-w-xl flex flex-col transition-all justify-center",
+                  effectiveGap,
+                  isHorizEnd
+                    ? "items-end text-right"
+                    : isHorizStart
+                    ? "items-start text-left"
+                    : "items-center text-center"
+                )}
+              >
+                {renderStatsBlock(false)}
+                {renderTrustLogos()}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   },

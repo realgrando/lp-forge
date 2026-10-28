@@ -2899,7 +2899,10 @@ export default function StudioPage() {
                                       </span>
                                     </div>
                                     <SegmentedControl<LayoutDistribution>
-                                      value={selectedSection.layout.distribution || "start"}
+                                      value={
+                                        selectedSection.layout.distribution ||
+                                        (selectedSection.type.startsWith("header.") ? "start" : "center")
+                                      }
                                       onChange={(dist) =>
                                         updateSectionLayout(selectedSection.id, {
                                           distribution: dist,
@@ -2916,7 +2919,7 @@ export default function StudioPage() {
                                       ]}
                                     />
                                     <span className="text-[10px] text-zinc-500 block">
-                                      Posiciona os blocos (Logo, Menu e Botões) verticalmente pelo eixo Y do container.
+                                      Posiciona os elementos e blocos verticalmente pelo eixo Y do container.
                                     </span>
                                   </div>
                                 </>
