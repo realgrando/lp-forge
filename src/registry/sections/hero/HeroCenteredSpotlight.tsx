@@ -220,7 +220,7 @@ export const HeroCenteredSpotlightSection = createSection<HeroCenteredContent>({
     return (
       <div
         className={cn(
-          "w-full max-w-4xl flex transition-all",
+          "w-full flex transition-all",
           boxPositionClass,
           alignmentClass,
           getDirectionClass(),

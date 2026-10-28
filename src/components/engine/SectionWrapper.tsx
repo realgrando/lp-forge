@@ -249,11 +249,21 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   // Respiro Vertical Externo com compensação harmônica quando o Header sobrepõe o Hero
   const getOuterPaddingYClass = () => {
     if (rawContainer) return "py-0";
-    if (isFirstAfterHeader && isOverlayActive) {
-      if (effectivePaddingY === "none") return "pt-20 md:pt-24 pb-0";
-      if (effectivePaddingY === "compact") return "pt-24 md:pt-28 pb-4 md:pb-8";
-      if (effectivePaddingY === "normal") return "pt-28 md:pt-36 pb-8 md:pb-16";
-      return "pt-32 md:pt-44 pb-12 md:pb-24";
+    if (isHeader) return "py-0";
+    if (isFirstAfterHeader) {
+      if (isOverlayActive) {
+        if (effectivePaddingY === "none") return "pt-16 md:pt-20 pb-0";
+        if (effectivePaddingY === "compact") return "pt-18 md:pt-22 pb-4 md:pb-6";
+        if (effectivePaddingY === "normal") return "pt-20 md:pt-24 pb-8 md:pb-12";
+        return "pt-24 md:pt-28 pb-12 md:pb-16";
+      } else {
+        // Quando o header NÃO sobrepõe o Hero (headerOverlay === false):
+        // O header já é a borda visual superior, então o Hero só precisa de respiro suave
+        if (effectivePaddingY === "none") return "pt-0 pb-0";
+        if (effectivePaddingY === "compact") return "pt-3 md:pt-4 pb-4 md:pb-8";
+        if (effectivePaddingY === "normal") return "pt-4 md:pt-6 pb-8 md:pb-16";
+        return "pt-6 md:pt-10 pb-12 md:pb-24";
+      }
     }
     return PADDING_OUTER_MAP[effectivePaddingY];
   };
@@ -318,14 +328,17 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
 
   // Afastamento vertical da tag <section> na página
   const getSectionPaddingClass = () => {
+    if (isHeader) return "py-0";
     if (isFullWidth) {
       return getOuterPaddingYClass();
     }
     // Quando o container pai é contido (boxed, narrow, mobile):
     // A tag <section> fornece o respiro externo na página/body
-    if (isHeader) return "py-0 px-3 sm:px-6";
     if (isFirstAfterHeader && isOverlayActive) {
       return "pt-0 pb-4 md:pb-8 px-3 sm:px-6";
+    }
+    if (isFirstAfterHeader && !isOverlayActive) {
+      return "pt-2 md:pt-4 pb-4 md:pb-8 px-3 sm:px-6";
     }
     return "py-4 md:py-8 px-3 sm:px-6";
   };
@@ -337,6 +350,9 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
       : getAdaptivePaddingXClass(effectivePaddingX, effectiveContainerWidth);
     if (isFullWidth) {
       return pxClass;
+    }
+    if (isHeader) {
+      return pxClass; // Headers NEVER receive vertical padding on the container wrapper
     }
     // Para containers contidos, o respiro vertical configurado (paddingY) fica dentro do box colorido
     const pyClass = getOuterPaddingYClass();

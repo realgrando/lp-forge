@@ -214,7 +214,7 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
       containerAlignX: "center",
       containerAlignY: "center",
       minHeight: "auto",
-      paddingY: "spacious",
+      paddingY: "normal",
       paddingX: "normal",
       componentWidth: "full",
       direction: "col",
@@ -577,7 +577,10 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
     };
 
     const isCardMode =
-      surfaceStyle !== "solid" || Boolean(styles.customSurface);
+      Boolean(styles.customSurface) ||
+      (Boolean(styles.surfaceVariant) &&
+        styles.surfaceVariant !== "solid" &&
+        layout?.containerWidth !== "full");
 
     return (
       <div
@@ -588,7 +591,7 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
           isCardMode && [
             getSurfaceClasses(surfaceStyle),
             getRadiusClass(radiusPreset),
-            "p-5 sm:p-8 md:p-14 lg:p-16 border shadow-2xl overflow-hidden",
+            "p-5 sm:p-6 md:p-8 border shadow-2xl overflow-hidden",
           ]
         )}
         style={
