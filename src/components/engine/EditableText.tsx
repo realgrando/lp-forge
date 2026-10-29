@@ -41,6 +41,39 @@ export const TEXT_MAX_WIDTH_CLASSES: Record<TextMaxWidth, string> = {
 };
 
 /**
+ * Aplica transformação de texto confiável (incluindo strings que já vêm em caixa alta do schema).
+ * Corrige o comportamento da especificação CSS onde 'capitalize' não converte caracteres subsequentes
+ * para minúsculas se já estiverem em maiúsculas ("CONTRATO" continuaria "CONTRATO").
+ */
+export function applyTextCaseTransform(text?: string, transform?: string): string {
+  if (!text) return "";
+  if (!transform || transform === "default") {
+    return text;
+  }
+  if (transform === "uppercase") {
+    return text.toUpperCase();
+  }
+  if (transform === "lowercase") {
+    return text.toLowerCase();
+  }
+  if (transform === "capitalize") {
+    // Converte para Title Case consistente independente do casing original
+    return text
+      .toLowerCase()
+      .replace(/(?:^|\s|\/|-)\p{L}/gu, (match) => match.toUpperCase());
+  }
+  if (transform === "normal-case") {
+    // Se o texto original estiver 100% em maiúsculas (padrão de schema), converte para Sentence Case
+    const isAllCaps = text === text.toUpperCase() && text !== text.toLowerCase();
+    if (isAllCaps) {
+      return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    }
+    return text;
+  }
+  return text;
+}
+
+/**
  * Remove classes da classe padrão do componente que entrariam em conflito com
  * os overrides explícitos selecionados pelo designer (ex: text-4xl sm:text-6xl lg:text-7xl).
  */
@@ -244,6 +277,10 @@ export const EditableText: React.FC<EditableTextProps> = ({
       "var(--site-border, color-mix(in srgb, var(--site-accent) 35%, transparent))";
 
     const effectiveTransform = override?.textTransform || "uppercase";
+    const displayValue = applyTextCaseTransform(
+      value,
+      override?.textTransform || "uppercase"
+    );
     const maxWidthClass = override?.maxWidth
       ? TEXT_MAX_WIDTH_CLASSES[override.maxWidth]
       : undefined;
@@ -280,7 +317,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
         )}
         <span>
           {renderHighlightedText(
-            value,
+            displayValue,
             override?.highlightStyle || "accent",
             override?.highlightColor,
             accentColor
@@ -290,6 +327,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
     );
   }
 
+  const displayValue = applyTextCaseTransform(value, override?.textTransform);
   const maxWidthClass = override?.maxWidth
     ? TEXT_MAX_WIDTH_CLASSES[override.maxWidth]
     : undefined;
@@ -329,7 +367,7 @@ export const EditableText: React.FC<EditableTextProps> = ({
         />
       )}
       {renderHighlightedText(
-        value,
+        displayValue,
         override?.highlightStyle || "accent",
         override?.highlightColor || "var(--site-highlight-color, var(--site-accent))",
         accentColor

@@ -622,12 +622,6 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
       );
     };
 
-    const isCardMode =
-      Boolean(styles.customSurface) ||
-      (Boolean(styles.surfaceVariant) &&
-        styles.surfaceVariant !== "solid" &&
-        layout?.containerWidth !== "full");
-
     const hasSecondaryContent =
       (showStats && statsToRender.length > 0) || showTrustLogos;
 
@@ -786,24 +780,8 @@ export const HeroImpactCenterSection = createSection<HeroImpactCenterContent>({
           "relative w-full flex flex-col transition-all",
           stackAlignmentClass,
           colVerticalJustifyClass,
-          layout?.alignItems === "stretch" && "flex-1 h-full",
-          isCardMode && [
-            getSurfaceClasses(surfaceStyle),
-            getRadiusClass(radiusPreset),
-            "p-5 sm:p-6 md:p-8 border shadow-2xl overflow-hidden",
-          ]
+          layout?.alignItems === "stretch" && "flex-1 h-full"
         )}
-        style={
-          isCardMode
-            ? {
-                backgroundColor: styles.customSurface || undefined,
-                borderColor: styles.borderColor || undefined,
-                borderWidth: styles.borderWidth
-                  ? `${styles.borderWidth}px`
-                  : undefined,
-              }
-            : undefined
-        }
       >
         {/* Imagem de Fundo Opcional do Card Hero */}
         {!isHidden("bgImage") && content.bgImage && (

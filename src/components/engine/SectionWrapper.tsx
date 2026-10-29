@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { cn, getRadiusClass } from "@/lib/utils";
+import { cn, getRadiusClass, getSurfaceClasses } from "@/lib/utils";
 import {
+  BorderPosition,
   ComponentWidth,
   ContainerAlignX,
   ContainerAlignY,
@@ -14,6 +15,8 @@ import {
   PaddingScale,
   SectionMinHeight,
   SectionNode,
+  SurfaceBlur,
+  SurfaceStyle,
   ThemeConfig,
 } from "@/types/site";
 import { ArrowUp, ArrowDown, Copy, Trash2, EyeOff, Sparkles, Box, Layers } from "lucide-react";
@@ -112,7 +115,59 @@ const PADDING_OUTER_MAP: Record<PaddingScale, string> = {
   spacious: "py-12 md:py-24",
 };
 
-// Padding Interno Vertical (Respiro do conteúdo dentro do container)
+// Padding Interno Vertical do Container Filho (Respiro interno vertical)
+export const CHILD_PADDING_Y_MAP: Record<PaddingScale, string> = {
+  none: "py-0",
+  compact: "py-3 sm:py-5",
+  normal: "py-6 sm:py-10 md:py-12",
+  spacious: "py-10 sm:py-16 md:py-20",
+};
+
+// Padding Interno Vertical para Headers
+export const HEADER_CHILD_PADDING_Y_MAP: Record<PaddingScale, string> = {
+  none: "py-0",
+  compact: "py-1.5 md:py-2",
+  normal: "py-2.5 md:py-3.5",
+  spacious: "py-4 md:py-5",
+};
+
+// Padding Interno Lateral do Container Filho (Respiro interno horizontal)
+export const CHILD_PADDING_X_MAP: Record<PaddingScale, string> = {
+  none: "px-0",
+  compact: "px-3 sm:px-5",
+  normal: "px-5 sm:px-8 md:px-10",
+  spacious: "px-8 sm:px-12 md:px-16",
+};
+
+// Desfoque de Fundo do Card (Backdrop Blur)
+export const SURFACE_BLUR_MAP: Record<SurfaceBlur, string> = {
+  none: "backdrop-blur-none",
+  sm: "backdrop-blur-sm",
+  md: "backdrop-blur-md",
+  lg: "backdrop-blur-lg",
+  xl: "backdrop-blur-xl",
+};
+
+// Posição da Borda do Container Filho
+export const getBorderPositionClass = (position: BorderPosition = "all"): string => {
+  switch (position) {
+    case "none":
+      return "border-0 border-transparent";
+    case "top":
+      return "border-t";
+    case "bottom":
+      return "border-b";
+    case "top_bottom":
+      return "border-y";
+    case "sides":
+      return "border-x";
+    case "all":
+    default:
+      return "border";
+  }
+};
+
+// Padding Interno Vertical Legado
 const PADDING_INNER_MAP: Record<PaddingScale, string> = {
   none: "py-0",
   compact: "py-3 md:py-6",
@@ -305,6 +360,140 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
   const parentRadiusClass = getRadiusClass(parentRadiusPreset);
   const childRadiusPreset = styles.borderRadius || "none";
   const childRadiusClass = getRadiusClass(childRadiusPreset);
+
+  // Meso-camada: Espaçamento Interno (Paddings Y e X do Filho)
+  const effectivePaddingInnerY: PaddingScale =
+    layout.paddingInner || (isHeader ? "compact" : "none");
+  const effectivePaddingInnerX: PaddingScale =
+    layout.paddingInnerX || (isHeader ? "normal" : "none");
+
+  const childPaddingYClass = isHeader
+    ? HEADER_CHILD_PADDING_Y_MAP[effectivePaddingInnerY]
+    : CHILD_PADDING_Y_MAP[effectivePaddingInnerY];
+  const childPaddingXClass = CHILD_PADDING_X_MAP[effectivePaddingInnerX];
+
+  // Acabamento de Superfície e Card do Filho
+  const hasChildSurface =
+    Boolean(styles.customSurface) ||
+    (Boolean(styles.surfaceVariant) && styles.surfaceVariant !== "solid") ||
+    (styles.cardPattern !== undefined && styles.cardPattern !== "none") ||
+    Boolean(styles.cardGradientEnabled) ||
+    Boolean(styles.cardBgImage);
+
+  const surfaceStyle: SurfaceStyle =
+    styles.surfaceVariant || theme.tokens?.surfaceStyle || "solid";
+  const childSurfaceClass = hasChildSurface ? getSurfaceClasses(surfaceStyle) : "";
+
+  // Borda do Filho
+  const rawChildBw = styles.borderWidth;
+  const isZeroChildBorder = rawChildBw === "0";
+  const hasChildBorder =
+    !isZeroChildBorder &&
+    (Boolean(styles.borderColor) ||
+      (styles.borderPosition !== undefined && styles.borderPosition !== "none") ||
+      hasChildSurface);
+  const effectiveChildBorderPosition: BorderPosition =
+    styles.borderPosition || (isHeader ? "bottom" : "all");
+  const childBorderPositionClass = isZeroChildBorder
+    ? "border-0 border-transparent"
+    : getBorderPositionClass(effectiveChildBorderPosition);
+  const childBorderColorValue =
+    styles.borderColor ||
+    (hasChildBorder ? "var(--site-border, rgba(255,255,255,0.12))" : undefined);
+
+  // Desfoque de Fundo (Backdrop Blur)
+  const effectiveChildBlur = styles.surfaceBlur || "none";
+  const childBlurClass =
+    effectiveChildBlur !== "none" ? SURFACE_BLUR_MAP[effectiveChildBlur] : "";
+
+  // Motor de Gradiente do Card do Filho
+  let childCardBgStyle: string | undefined = styles.customSurface || undefined;
+  if (styles.cardGradientEnabled) {
+    const fromColor = styles.cardGradientFrom || "#09090b";
+    const toColor = styles.cardGradientTo || styles.customSurface || "#18181b";
+    const dir = styles.cardGradientDirection || "to-b";
+    if (dir === "radial") {
+      childCardBgStyle = `radial-gradient(circle at center, ${fromColor}, ${toColor})`;
+    } else {
+      const dirMap: Record<string, string> = {
+        "to-b": "to bottom",
+        "to-t": "to top",
+        "to-r": "to right",
+        "to-br": "to bottom right",
+      };
+      childCardBgStyle = `linear-gradient(${dirMap[dir] || "to bottom"}, ${fromColor}, ${toColor})`;
+    }
+  }
+
+  // Textura do Card (Pattern)
+  const renderCardPattern = () => {
+    if (!styles.cardPattern || styles.cardPattern === "none") return null;
+    return (
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-0 overflow-hidden",
+          childRadiusClass
+        )}
+      >
+        {styles.cardPattern === "grid" && (
+          <div
+            className="absolute inset-0 z-0 opacity-20"
+            style={{
+              backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px)`,
+              backgroundSize: "32px 32px",
+              maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+            }}
+          />
+        )}
+        {styles.cardPattern === "dots" && (
+          <div
+            className="absolute inset-0 z-0 opacity-25"
+            style={{
+              backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)`,
+              backgroundSize: "20px 20px",
+              maskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 100%)",
+            }}
+          />
+        )}
+        {styles.cardPattern === "noise" && (
+          <div
+            className="absolute inset-0 z-0 opacity-10 mix-blend-overlay"
+            style={{
+              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 1px, transparent 0)`,
+              backgroundSize: "6px 6px",
+            }}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // Imagem de Fundo do Card
+  const renderCardBgImage = () => {
+    if (!styles.cardBgImage) return null;
+    return (
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-0 z-0 overflow-hidden",
+          childRadiusClass
+        )}
+      >
+        <img
+          src={styles.cardBgImage}
+          alt=""
+          className="w-full h-full object-cover object-center"
+        />
+        <div
+          className="absolute inset-0 bg-black"
+          style={{ opacity: (styles.cardBgOverlayOpacity ?? 60) / 100 }}
+        />
+      </div>
+    );
+  };
 
   // Hierarquia de Z-Index Estrita:
   // 1. Header selecionado no editor: z-50
@@ -675,31 +864,54 @@ export const SectionWrapper: React.FC<SectionWrapperProps> = ({
         <div
           data-layer="component-wrapper"
           className={cn(
-            "transition-all duration-200 flex relative z-10",
+            "transition-all duration-200 flex flex-col relative z-10",
             COMPONENT_WIDTH_MAP[effectiveComponentWidth],
             effectiveAlignX === "start"
-              ? "mr-auto ml-0 justify-start"
+              ? "mr-auto ml-0"
               : effectiveAlignX === "end"
-              ? "ml-auto mr-0 justify-end"
-              : "mx-auto justify-center",
-            effectiveAlignY === "stretch" && "h-full flex-1 flex flex-col",
-            effectiveComponentWidth !== "full" && childRadiusClass,
+              ? "ml-auto mr-0"
+              : "mx-auto",
+            effectiveAlignY === "stretch" && "h-full flex-1",
+            childRadiusClass,
+            (hasChildSurface || childRadiusPreset !== "none") && "overflow-hidden",
+            childPaddingYClass,
+            childPaddingXClass,
+            hasChildSurface && childSurfaceClass,
+            hasChildBorder && childBorderPositionClass,
+            hasChildSurface && childBlurClass,
             isEditor &&
               isSelected &&
               (activeInspectorLayer === "child" || !activeInspectorLayer) &&
               cn(
                 "outline-2 outline-dashed outline-[#F4B400]",
-                effectiveComponentWidth !== "full" ? childRadiusClass : "rounded-none"
+                childRadiusPreset !== "none" ? childRadiusClass : "rounded-none"
               )
           )}
+          style={{
+            background: hasChildSurface ? childCardBgStyle : undefined,
+            borderColor: hasChildBorder ? childBorderColorValue : undefined,
+            borderWidth:
+              hasChildBorder && styles.borderWidth
+                ? `${styles.borderWidth}px`
+                : undefined,
+          }}
         >
+          {/* Textura do Card (Pattern) */}
+          {hasChildSurface && renderCardPattern()}
+
+          {/* Imagem de Fundo do Card */}
+          {hasChildSurface && renderCardBgImage()}
+
           {isEditor && isSelected && (activeInspectorLayer === "child" || !activeInspectorLayer) && (
             <div className="absolute -top-3 left-3 z-50 px-2 py-0.5 rounded-full bg-[#F4B400] text-black text-[9px] font-bold shadow-lg uppercase tracking-wider flex items-center gap-1 pointer-events-none">
               <Layers className="w-2.5 h-2.5" />
               <span>Container Filho ({effectiveComponentWidth.toUpperCase()})</span>
             </div>
           )}
-          {children}
+
+          <div className="relative z-10 w-full flex-1 flex flex-col">
+            {children}
+          </div>
         </div>
       </div>
     </section>
